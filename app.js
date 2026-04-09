@@ -229,7 +229,7 @@ async function generateImages() {
 
       if (!resp.ok) throw new Error('Generation failed for image ' + (i + 1));
       var data = await resp.json();
-      results.push({ url: data.url, b64: data.b64, desc: style + ' — ' + theme, index: i + 1 });
+      results.push({ url: data.url || ('data:image/png;base64,' + data.b64), b64: data.b64, desc: style + ' — ' + theme, index: i + 1 });
 
     } catch (err) {
       console.error('Image ' + (i+1) + ' failed:', err);
@@ -296,7 +296,7 @@ async function downloadImage(idx) {
     var resp = await fetch(BACKEND_URL + '/proxy-image', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ url: img.url })
+      body:    JSON.stringify({ url: img.url, b64: img.b64 })
     });
 
     if (!resp.ok) throw new Error('Download failed');
@@ -328,7 +328,7 @@ async function downloadAll() {
     var resp = await fetch(BACKEND_URL + '/download-all', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ images: validImages.map(function (r, i) { return { url: r.url, index: i + 1 }; }) })
+      body:    JSON.stringify({ images: validImages.map(function (r, i) { return { url: r.url, b64: r.b64, index: i + 1 }; }) })
     });
 
     if (!resp.ok) throw new Error('ZIP creation failed');
