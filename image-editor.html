@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Image Editor — Probiotic Fizzy Beverages</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+
+  <header class="top-bar">
+    <div class="brand-dot"></div>
+    <div>
+      <div class="top-title">AI Image Editor</div>
+      <div class="top-sub">Background removal · Scene generation · HD download</div>
+    </div>
+    <div class="header-right">
+      <span id="backend-status" class="status-pill status-unknown">⬤ checking...</span>
+    </div>
+  </header>
+
+  <!-- STEP PROGRESS -->
+  <div class="progress-bar">
+    <div class="prog-step active" id="prog-1">
+      <div class="prog-num">1</div>
+      <div class="prog-lbl">Upload</div>
+    </div>
+    <div class="prog-line"></div>
+    <div class="prog-step" id="prog-2">
+      <div class="prog-num">2</div>
+      <div class="prog-lbl">Customize</div>
+    </div>
+    <div class="prog-line"></div>
+    <div class="prog-step" id="prog-3">
+      <div class="prog-num">3</div>
+      <div class="prog-lbl">Generate</div>
+    </div>
+    <div class="prog-line"></div>
+    <div class="prog-step" id="prog-4">
+      <div class="prog-num">4</div>
+      <div class="prog-lbl">Download</div>
+    </div>
+  </div>
+
+  <!-- STEP 1: UPLOAD -->
+  <section class="step-section" id="step-1">
+    <div class="step-header">
+      <div class="step-num-badge">1</div>
+      <div>
+        <div class="step-title">Upload your product image</div>
+        <div class="step-sub">We'll remove the background automatically</div>
+      </div>
+    </div>
+    <div class="upload-zone" id="drop-zone">
+      <input type="file" id="file-input" accept="image/*">
+      <div class="upload-icon">&#8679;</div>
+      <div class="uz-title">Click to upload or drag & drop</div>
+      <div class="uz-sub">JPG · PNG · WEBP — max 10MB</div>
+    </div>
+    <div id="preview-area" style="display:none">
+      <div class="preview-grid">
+        <div class="preview-card">
+          <div class="preview-label">Original</div>
+          <img id="original-img" src="" alt="Original">
+        </div>
+        <div class="preview-card" id="removed-bg-card">
+          <div class="preview-label">Background removed</div>
+          <div id="removing-bg" class="removing-msg">
+            <div class="spinner"></div>
+            <span id="removing-status">Loading AI model...</span>
+          </div>
+          <img id="removed-bg-img" src="" alt="No background" style="display:none">
+        </div>
+      </div>
+      <button class="btn-ghost" onclick="resetUpload()">Upload different image</button>
+    </div>
+  </section>
+
+  <!-- STEP 2: CUSTOMIZE -->
+  <section class="step-section locked" id="step-2">
+    <div class="step-header">
+      <div class="step-num-badge">2</div>
+      <div>
+        <div class="step-title">Customize your scene</div>
+        <div class="step-sub">Choose background, add objects, set the mood</div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <label class="lbl">Background theme <span class="required">*</span></label>
+      <div class="theme-grid" id="theme-grid">
+        <div class="theme-chip active" data-theme="tropical beach with palm trees and golden sand">🏖 Tropical beach</div>
+        <div class="theme-chip" data-theme="lush green forest with sunlight rays">🌿 Forest</div>
+        <div class="theme-chip" data-theme="modern minimalist white kitchen counter">🍽 Kitchen</div>
+        <div class="theme-chip" data-theme="vibrant gym and fitness studio">💪 Gym</div>
+        <div class="theme-chip" data-theme="cozy wellness spa with candles and plants">🧘 Wellness spa</div>
+        <div class="theme-chip" data-theme="outdoor mountain hiking trail at sunrise">🏔 Mountains</div>
+        <div class="theme-chip" data-theme="rooftop bar at sunset with city skyline">🌆 Rooftop bar</div>
+        <div class="theme-chip" data-theme="fresh fruit market with colorful produce">🍊 Fruit market</div>
+        <div class="theme-chip" data-theme="studio gradient background with bokeh lights">✨ Studio</div>
+        <div class="theme-chip" data-theme="swimming pool on a sunny summer day">🏊 Pool</div>
+      </div>
+      <input type="text" id="custom-theme" placeholder="Or describe your own background theme...">
+    </div>
+
+    <div class="form-section">
+      <label class="lbl">Add objects <span class="optional">(optional)</span></label>
+      <div class="objects-grid" id="objects-grid">
+        <div class="obj-chip" data-obj="fresh mint leaves and ice cubes">🍃 Mint & ice</div>
+        <div class="obj-chip" data-obj="sliced citrus fruits like lemon and orange">🍋 Citrus slices</div>
+        <div class="obj-chip" data-obj="fizzy bubbles and water splashes">💧 Bubbles & splash</div>
+        <div class="obj-chip" data-obj="tropical flowers and hibiscus">🌺 Tropical flowers</div>
+        <div class="obj-chip" data-obj="glass with ice and condensation">🥤 Serving glass</div>
+        <div class="obj-chip" data-obj="green plants and leaves">🌱 Plants</div>
+        <div class="obj-chip" data-obj="wooden surface and natural textures">🪵 Natural textures</div>
+        <div class="obj-chip" data-obj="colorful confetti and celebration elements">🎉 Confetti</div>
+      </div>
+      <input type="text" id="custom-objects" placeholder="Or describe custom objects to add...">
+    </div>
+
+    <div class="form-section">
+      <label class="lbl">Lighting & mood</label>
+      <div class="mood-row">
+        <div class="mood-chip active" data-mood="bright and vibrant with natural sunlight">☀ Bright</div>
+        <div class="mood-chip" data-mood="warm golden hour lighting">🌅 Golden hour</div>
+        <div class="mood-chip" data-mood="cool and refreshing blue tones">❄ Cool & fresh</div>
+        <div class="mood-chip" data-mood="dramatic studio lighting with shadows">🎭 Dramatic</div>
+        <div class="mood-chip" data-mood="soft diffused natural light">🌤 Soft natural</div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <label class="lbl">Number of variations to generate</label>
+      <div class="count-row">
+        <input type="range" id="variation-count" min="4" max="12" value="10" step="2" oninput="updateCount(this.value)">
+        <span class="count-display" id="count-display">10 variations</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 3: GENERATE -->
+  <section class="step-section locked" id="step-3">
+    <div class="step-header">
+      <div class="step-num-badge">3</div>
+      <div>
+        <div class="step-title">Generate AI edited versions</div>
+        <div class="step-sub">HD 1024×1024 images generated by DALL-E 3</div>
+      </div>
+    </div>
+
+    <div id="setup-warning" class="warn-box" style="display:none">
+      ⚠ Backend URL not set. Go to <a href="#" onclick="showSetup()" style="color:inherit;font-weight:500">Setup</a> and enter your Render URL.
+    </div>
+
+    <button class="btn-generate" id="gen-btn" onclick="generateImages()">
+      <span id="gen-btn-text">✦ Generate AI Suggestions</span>
+    </button>
+
+    <!-- RESULTS GRID -->
+    <div id="results-area" style="display:none">
+      <div class="results-header">
+        <div class="results-title" id="results-title">Generated variations</div>
+        <button class="btn-download-all" id="download-all-btn" onclick="downloadAll()">
+          ⬇ Download all as ZIP
+        </button>
+      </div>
+      <div class="results-grid" id="results-grid"></div>
+    </div>
+
+    <!-- LOADING STATE -->
+    <div id="loading-area" style="display:none">
+      <div class="loading-card">
+        <div class="loading-spinner"></div>
+        <div class="loading-title">Generating your images...</div>
+        <div class="loading-sub" id="loading-progress">Starting generation...</div>
+        <div class="loading-bar-wrap"><div class="loading-bar" id="loading-bar"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SETUP MODAL -->
+  <div id="setup-panel" class="setup-overlay" style="display:none">
+    <div class="setup-modal">
+      <div class="setup-modal-header">
+        <div class="setup-modal-title">Backend Setup</div>
+        <button class="setup-close" onclick="hideSetup()">✕</button>
+      </div>
+      <div class="setup-modal-body">
+        <label class="lbl">Render Backend URL</label>
+        <div class="webhook-row">
+          <input type="text" id="backend-url-input" placeholder="https://your-app.onrender.com">
+          <button class="btn-green" onclick="saveBackend()">Save</button>
+        </div>
+        <div id="backend-saved-msg" class="saved-msg" style="display:none">✓ Saved!</div>
+        <div class="setup-note">
+          This is the same Render backend from your Instagram Content AI app — just make sure you've added the updated <strong>server.js</strong> with the image editing endpoints and set your <strong>OPENAI_API_KEY</strong> environment variable.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETUP BUTTON -->
+  <button class="setup-fab" onclick="showSetup()" title="Setup">⚙</button>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>
