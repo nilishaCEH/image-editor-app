@@ -331,7 +331,7 @@ async function checkBackend(){
     if(r.ok){
       var d = await r.json();
       var svcs = [];
-      if(d.services){ if(!d.services.removebg) svcs.push('no Remove.bg key'); if(!d.services.huggingface) svcs.push('no HF token'); }
+      if(d.services){ if(!d.services.removebg) svcs.push('no Remove.bg key'); if(!d.services.hf_token) svcs.push('no HF token'); }
       pill.textContent = svcs.length ? '⬤ connected ('+svcs.join(', ')+')' : '⬤ backend connected';
       pill.className   = svcs.length ? 'status-pill s-unk' : 'status-pill s-ok';
     } else throw new Error();
