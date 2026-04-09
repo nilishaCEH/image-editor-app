@@ -5,136 +5,141 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI Image Editor — Probiotic Fizzy Beverages</title>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --green: #1D9E75; --green-dark: #0F6E56; --green-light: #E1F5EE;
-      --green-mid: #5DCAA5; --green-deep: #085041;
-      --bg: #ffffff; --bg2: #f7f7f5; --bg3: #f0efea;
-      --text: #1a1a18; --text2: #6b6a64; --text3: #9b9a94;
-      --border: rgba(0,0,0,0.10); --border2: rgba(0,0,0,0.18);
-      --amber-light: #FAEEDA; --amber-mid: #EF9F27; --amber-deep: #633806;
-      --red-light: #FCEBEB; --red-mid: #F09595; --red-deep: #791F1F;
-      --radius: 8px; --radius-lg: 12px;
-      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --green:#1D9E75;--green-dark:#0F6E56;--green-light:#E1F5EE;--green-mid:#5DCAA5;--green-deep:#085041;
+      --bg:#fff;--bg2:#f7f7f5;--bg3:#f0efea;
+      --text:#1a1a18;--text2:#6b6a64;--text3:#9b9a94;
+      --border:rgba(0,0,0,.10);--border2:rgba(0,0,0,.18);
+      --amber-light:#FAEEDA;--amber-mid:#EF9F27;--amber-deep:#633806;
+      --red-light:#FCEBEB;--red-mid:#F09595;--red-deep:#791F1F;
+      --radius:8px;--radius-lg:12px;
+      --font:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif
     }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #1a1a18; --bg2: #242422; --bg3: #2e2e2c;
-        --text: #e8e6de; --text2: #9b9a94; --text3: #6b6a64;
-        --border: rgba(255,255,255,0.10); --border2: rgba(255,255,255,0.18);
-        --green-light: #0a2e20; --green-deep: #9FE1CB;
-        --amber-light: #2e1e04; --amber-deep: #FAC775;
-        --red-light: #2e0a0a; --red-deep: #F7C1C1;
-      }
-    }
-    body { font-family: var(--font); background: var(--bg3); color: var(--text); min-height: 100vh; }
-    .app { max-width: 860px; margin: 0 auto; background: var(--bg); min-height: 100vh; padding: 1.5rem 1.25rem 5rem; }
-    .top-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 1.5rem; }
-    .brand-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
-    .top-title { font-size: 18px; font-weight: 600; color: var(--text); }
-    .top-sub { font-size: 13px; color: var(--text2); margin-top: 2px; }
-    .header-right { margin-left: auto; }
-    .status-pill { font-size: 12px; padding: 4px 10px; border-radius: 20px; font-weight: 500; }
-    .status-ok  { background: var(--green-light); color: var(--green-deep); }
-    .status-err { background: var(--red-light); color: var(--red-deep); }
-    .status-unk { background: var(--bg2); color: var(--text3); }
-    .progress-bar { display: flex; align-items: center; margin-bottom: 2rem; }
-    .prog-step { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-    .prog-num { width: 28px; height: 28px; border-radius: 50%; background: var(--bg3); border: 1.5px solid var(--border2); color: var(--text3); font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; transition: .2s; }
-    .prog-lbl { font-size: 11px; color: var(--text3); white-space: nowrap; }
-    .prog-step.active .prog-num { background: var(--green); border-color: var(--green); color: #fff; }
-    .prog-step.active .prog-lbl { color: var(--green-dark); font-weight: 500; }
-    .prog-step.done .prog-num { background: var(--green-light); border-color: var(--green-mid); color: var(--green-dark); }
-    .prog-line { flex: 1; height: 1.5px; background: var(--border2); margin: 0 6px; margin-bottom: 16px; }
-    .step-section { margin-bottom: 2rem; transition: opacity .3s; }
-    .step-section.locked { opacity: .35; pointer-events: none; }
-    .step-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 1.2rem; }
-    .step-num-badge { width: 32px; height: 32px; border-radius: 50%; background: var(--green); color: #fff; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .step-title { font-size: 16px; font-weight: 600; color: var(--text); }
-    .step-sub { font-size: 13px; color: var(--text2); margin-top: 2px; }
-    .upload-zone { border: 1.5px dashed var(--border2); border-radius: var(--radius-lg); padding: 2.5rem; text-align: center; cursor: pointer; background: var(--bg2); transition: .15s; margin-bottom: 1rem; }
-    .upload-zone:hover { border-color: var(--green-mid); background: var(--green-light); }
-    .upload-zone input { display: none; }
-    .upload-icon { font-size: 36px; opacity: .4; margin-bottom: 10px; }
-    .uz-title { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
-    .uz-sub { font-size: 12px; color: var(--text2); }
-    .preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
-    .preview-card { background: var(--bg2); border-radius: var(--radius-lg); overflow: hidden; border: 0.5px solid var(--border); }
-    .preview-label { font-size: 11px; font-weight: 500; color: var(--text2); padding: 8px 12px; text-transform: uppercase; letter-spacing: .05em; border-bottom: 0.5px solid var(--border); }
-    .preview-card img { width: 100%; aspect-ratio: 1; object-fit: contain; display: block; background: repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 0 0 / 16px 16px; }
-    .removing-msg { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; aspect-ratio: 1; font-size: 13px; color: var(--text2); padding: 1rem; text-align: center; }
-    .spinner { width: 28px; height: 28px; border: 2.5px solid var(--border2); border-top-color: var(--green); border-radius: 50%; animation: spin .8s linear infinite; flex-shrink: 0; }
-    .progress-ring-wrap { width: 100%; background: var(--border); border-radius: 20px; height: 5px; overflow: hidden; margin-top: 4px; }
-    .progress-ring-fill { height: 100%; background: var(--green); border-radius: 20px; transition: width .3s; width: 0%; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .form-section { margin-bottom: 1.4rem; }
-    .lbl { display: block; font-size: 12px; font-weight: 600; color: var(--text2); letter-spacing: .05em; text-transform: uppercase; margin-bottom: 8px; }
-    .required { color: var(--green); }
-    .optional { color: var(--text3); font-weight: 400; text-transform: none; letter-spacing: 0; }
-    input[type="text"] { width: 100%; padding: 9px 12px; font-size: 13px; font-family: var(--font); background: var(--bg); color: var(--text); border: 0.5px solid var(--border2); border-radius: var(--radius); outline: none; margin-top: 8px; transition: border-color .15s; }
-    input[type="text"]:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(29,158,117,.12); }
-    .theme-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
-    .theme-chip { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 8px 10px; font-size: 12px; color: var(--text2); cursor: pointer; transition: .12s; user-select: none; text-align: center; }
-    .theme-chip:hover { border-color: var(--border2); color: var(--text); }
-    .theme-chip.active { border: 1.5px solid var(--green); background: var(--green-light); color: var(--green-deep); font-weight: 500; }
-    .objects-grid { display: flex; flex-wrap: wrap; gap: 7px; }
-    .obj-chip { background: var(--bg2); border: 0.5px solid var(--border); border-radius: 20px; padding: 5px 12px; font-size: 12px; color: var(--text2); cursor: pointer; transition: .12s; user-select: none; }
-    .obj-chip.active { background: var(--green-light); border-color: var(--green-mid); color: var(--green-deep); font-weight: 500; }
-    .mood-row { display: flex; flex-wrap: wrap; gap: 7px; }
-    .mood-chip { background: var(--bg2); border: 0.5px solid var(--border); border-radius: 20px; padding: 5px 14px; font-size: 12px; color: var(--text2); cursor: pointer; transition: .12s; user-select: none; }
-    .mood-chip.active { background: var(--green-light); border-color: var(--green-mid); color: var(--green-deep); font-weight: 500; }
-    .count-row { display: flex; align-items: center; gap: 14px; }
-    .count-row input[type="range"] { flex: 1; margin-top: 0; accent-color: var(--green); }
-    .count-display { font-size: 14px; font-weight: 600; color: var(--green-dark); min-width: 90px; text-align: right; }
-    .btn-generate { width: 100%; padding: 16px; font-size: 16px; font-weight: 600; background: var(--green); color: #fff; border: none; border-radius: var(--radius-lg); cursor: pointer; font-family: var(--font); transition: background .15s; margin-bottom: 1.5rem; }
-    .btn-generate:hover { background: var(--green-dark); }
-    .btn-generate:disabled { background: var(--bg3); color: var(--text3); cursor: not-allowed; }
-    .loading-card { background: var(--bg2); border-radius: var(--radius-lg); padding: 2.5rem; text-align: center; border: 0.5px solid var(--border); }
-    .loading-spinner { width: 44px; height: 44px; border: 3px solid var(--border2); border-top-color: var(--green); border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 1rem; }
-    .loading-title { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
-    .loading-sub { font-size: 13px; color: var(--text2); margin-bottom: 1.2rem; }
-    .loading-bar-wrap { background: var(--bg3); border-radius: 20px; height: 6px; overflow: hidden; }
-    .loading-bar { height: 100%; background: var(--green); border-radius: 20px; width: 0%; transition: width .4s ease; }
-    .results-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 1rem; }
-    .results-title { font-size: 15px; font-weight: 600; color: var(--text); }
-    .btn-download-all { background: var(--green); color: #fff; border: none; border-radius: var(--radius); padding: 8px 16px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: var(--font); transition: .15s; }
-    .btn-download-all:hover { background: var(--green-dark); }
-    .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
-    .result-card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; transition: border-color .15s; }
-    .result-card:hover { border-color: var(--green-mid); }
-    .result-img-wrap { position: relative; aspect-ratio: 1; background: var(--bg2); overflow: hidden; }
-    .result-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .result-badge { position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,.55); color: #fff; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; }
-    .result-card-body { padding: 10px 12px; }
-    .result-desc { font-size: 12px; color: var(--text2); margin-bottom: 8px; line-height: 1.5; }
-    .result-actions { display: flex; gap: 6px; }
-    .btn-dl { flex: 1; background: var(--green); color: #fff; border: none; border-radius: var(--radius); padding: 7px; font-size: 12px; font-weight: 500; cursor: pointer; font-family: var(--font); transition: .15s; }
-    .btn-dl:hover { background: var(--green-dark); }
-    .btn-dl:disabled { background: var(--bg3); color: var(--text3); cursor: not-allowed; }
-    .btn-preview { background: var(--bg2); color: var(--text2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 7px 10px; font-size: 12px; cursor: pointer; font-family: var(--font); }
-    .warn-box { background: var(--amber-light); border: 0.5px solid var(--amber-mid); border-radius: var(--radius); padding: 10px 14px; font-size: 13px; color: var(--amber-deep); margin-bottom: 1rem; line-height: 1.6; }
-    .btn-ghost { background: transparent; border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 7px 14px; font-size: 13px; color: var(--text2); cursor: pointer; font-family: var(--font); }
-    .btn-green { background: var(--green); color: #fff; border: none; border-radius: var(--radius); padding: 8px 14px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: var(--font); white-space: nowrap; }
-    .saved-msg { font-size: 12px; color: var(--green); margin-top: 4px; }
-    .setup-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 1rem; }
-    .setup-modal { background: var(--bg); border-radius: var(--radius-lg); padding: 1.5rem; width: 100%; max-width: 480px; }
-    .setup-modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.2rem; }
-    .setup-modal-title { font-size: 16px; font-weight: 600; color: var(--text); }
-    .setup-close { background: none; border: none; font-size: 18px; color: var(--text2); cursor: pointer; }
-    .setup-modal-body { display: flex; flex-direction: column; gap: 8px; }
-    .webhook-row { display: flex; gap: 8px; }
-    .webhook-row input { flex: 1; }
-    .setup-note { font-size: 12px; color: var(--text2); line-height: 1.6; padding: 10px; background: var(--bg2); border-radius: var(--radius); }
-    .setup-fab { position: fixed; bottom: 24px; right: 24px; width: 48px; height: 48px; border-radius: 50%; background: var(--text); color: var(--bg); border: none; font-size: 20px; cursor: pointer; z-index: 90; }
-    .setup-fab:hover { background: var(--green); }
-    .fullscreen-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.92); z-index: 200; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-    .fullscreen-overlay img { max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: var(--radius); }
-    @media (max-width: 480px) {
-      .preview-grid { grid-template-columns: 1fr; }
-      .results-grid { grid-template-columns: 1fr 1fr; }
-      .theme-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
-      .prog-lbl { display: none; }
-    }
+    @media(prefers-color-scheme:dark){:root{
+      --bg:#1a1a18;--bg2:#242422;--bg3:#2e2e2c;
+      --text:#e8e6de;--text2:#9b9a94;--text3:#6b6a64;
+      --border:rgba(255,255,255,.10);--border2:rgba(255,255,255,.18);
+      --green-light:#0a2e20;--green-deep:#9FE1CB;
+      --amber-light:#2e1e04;--amber-deep:#FAC775;
+      --red-light:#2e0a0a;--red-deep:#F7C1C1
+    }}
+    body{font-family:var(--font);background:var(--bg3);color:var(--text);min-height:100vh}
+    .app{max-width:860px;margin:0 auto;background:var(--bg);min-height:100vh;padding:1.5rem 1.25rem 5rem}
+    /* Header */
+    .top-bar{display:flex;align-items:center;gap:12px;margin-bottom:1.5rem}
+    .brand-dot{width:10px;height:10px;border-radius:50%;background:var(--green);flex-shrink:0}
+    .top-title{font-size:18px;font-weight:600;color:var(--text)}
+    .top-sub{font-size:13px;color:var(--text2);margin-top:2px}
+    .header-right{margin-left:auto}
+    .status-pill{font-size:12px;padding:4px 10px;border-radius:20px;font-weight:500}
+    .s-ok{background:var(--green-light);color:var(--green-deep)}
+    .s-err{background:var(--red-light);color:var(--red-deep)}
+    .s-unk{background:var(--bg2);color:var(--text3)}
+    /* Progress bar */
+    .prog-bar{display:flex;align-items:center;margin-bottom:2rem}
+    .prog-step{display:flex;flex-direction:column;align-items:center;gap:4px}
+    .prog-num{width:28px;height:28px;border-radius:50%;background:var(--bg3);border:1.5px solid var(--border2);color:var(--text3);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;transition:.2s}
+    .prog-lbl{font-size:11px;color:var(--text3);white-space:nowrap}
+    .prog-step.active .prog-num{background:var(--green);border-color:var(--green);color:#fff}
+    .prog-step.active .prog-lbl{color:var(--green-dark);font-weight:500}
+    .prog-step.done .prog-num{background:var(--green-light);border-color:var(--green-mid);color:var(--green-dark)}
+    .prog-line{flex:1;height:1.5px;background:var(--border2);margin:0 6px;margin-bottom:16px}
+    /* Steps */
+    .step{margin-bottom:2rem;transition:opacity .3s}
+    .step.locked{opacity:.35;pointer-events:none}
+    .step-hdr{display:flex;align-items:flex-start;gap:12px;margin-bottom:1.2rem}
+    .step-badge{width:32px;height:32px;border-radius:50%;background:var(--green);color:#fff;font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .step-title{font-size:16px;font-weight:600;color:var(--text)}
+    .step-sub{font-size:13px;color:var(--text2);margin-top:2px}
+    /* Upload */
+    .upload-zone{border:1.5px dashed var(--border2);border-radius:var(--radius-lg);padding:2.5rem;text-align:center;cursor:pointer;background:var(--bg2);transition:.15s;margin-bottom:1rem}
+    .upload-zone:hover{border-color:var(--green-mid);background:var(--green-light)}
+    .upload-zone input{display:none}
+    .uz-icon{font-size:36px;opacity:.4;margin-bottom:10px}
+    .uz-title{font-size:15px;font-weight:500;color:var(--text);margin-bottom:4px}
+    .uz-sub{font-size:12px;color:var(--text2)}
+    /* Preview */
+    .preview-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+    .preview-card{background:var(--bg2);border-radius:var(--radius-lg);overflow:hidden;border:.5px solid var(--border)}
+    .preview-lbl{font-size:11px;font-weight:500;color:var(--text2);padding:8px 12px;text-transform:uppercase;letter-spacing:.05em;border-bottom:.5px solid var(--border)}
+    .preview-card img{width:100%;aspect-ratio:1;object-fit:contain;display:block;background:repeating-conic-gradient(#ccc 0% 25%,#fff 0% 50%) 0 0/16px 16px}
+    .removing{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;aspect-ratio:1;font-size:13px;color:var(--text2);padding:1rem;text-align:center}
+    /* Spinner */
+    .spinner,.big-spinner{border-radius:50%;animation:spin .8s linear infinite}
+    .spinner{width:28px;height:28px;border:2.5px solid var(--border2);border-top-color:var(--green);flex-shrink:0}
+    .big-spinner{width:44px;height:44px;border:3px solid var(--border2);border-top-color:var(--green);margin:0 auto 1rem}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .prog-wrap{width:100%;background:var(--border);border-radius:20px;height:5px;overflow:hidden;margin-top:4px}
+    .prog-fill{height:100%;background:var(--green);border-radius:20px;width:0%;transition:width .3s}
+    /* Form */
+    .form-sec{margin-bottom:1.4rem}
+    .lbl{display:block;font-size:12px;font-weight:600;color:var(--text2);letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px}
+    .req{color:var(--green)}.opt{color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0}
+    input[type=text]{width:100%;padding:9px 12px;font-size:13px;font-family:var(--font);background:var(--bg);color:var(--text);border:.5px solid var(--border2);border-radius:var(--radius);outline:none;margin-top:8px;transition:border-color .15s}
+    input[type=text]:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(29,158,117,.12)}
+    .theme-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+    .theme-chip{background:var(--bg);border:.5px solid var(--border);border-radius:var(--radius);padding:8px 10px;font-size:12px;color:var(--text2);cursor:pointer;transition:.12s;user-select:none;text-align:center}
+    .theme-chip.active{border:1.5px solid var(--green);background:var(--green-light);color:var(--green-deep);font-weight:500}
+    .obj-row{display:flex;flex-wrap:wrap;gap:7px}
+    .obj-chip{background:var(--bg2);border:.5px solid var(--border);border-radius:20px;padding:5px 12px;font-size:12px;color:var(--text2);cursor:pointer;transition:.12s;user-select:none}
+    .obj-chip.active{background:var(--green-light);border-color:var(--green-mid);color:var(--green-deep);font-weight:500}
+    .mood-row{display:flex;flex-wrap:wrap;gap:7px}
+    .mood-chip{background:var(--bg2);border:.5px solid var(--border);border-radius:20px;padding:5px 14px;font-size:12px;color:var(--text2);cursor:pointer;transition:.12s;user-select:none}
+    .mood-chip.active{background:var(--green-light);border-color:var(--green-mid);color:var(--green-deep);font-weight:500}
+    .count-row{display:flex;align-items:center;gap:14px}
+    .count-row input[type=range]{flex:1;accent-color:var(--green)}
+    .count-val{font-size:14px;font-weight:600;color:var(--green-dark);min-width:90px;text-align:right}
+    /* Buttons */
+    .btn-gen{width:100%;padding:16px;font-size:16px;font-weight:600;background:var(--green);color:#fff;border:none;border-radius:var(--radius-lg);cursor:pointer;font-family:var(--font);transition:.15s;margin-bottom:1.5rem}
+    .btn-gen:hover{background:var(--green-dark)}
+    .btn-gen:disabled{background:var(--bg3);color:var(--text3);cursor:not-allowed}
+    .btn-ghost{background:transparent;border:.5px solid var(--border2);border-radius:var(--radius);padding:7px 14px;font-size:13px;color:var(--text2);cursor:pointer;font-family:var(--font)}
+    .btn-green{background:var(--green);color:#fff;border:none;border-radius:var(--radius);padding:8px 14px;font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font);white-space:nowrap}
+    /* Loading */
+    .loading-card{background:var(--bg2);border-radius:var(--radius-lg);padding:2.5rem;text-align:center;border:.5px solid var(--border)}
+    .loading-title{font-size:16px;font-weight:600;color:var(--text);margin-bottom:6px}
+    .loading-sub{font-size:13px;color:var(--text2);margin-bottom:1.2rem}
+    .bar-wrap{background:var(--bg3);border-radius:20px;height:6px;overflow:hidden}
+    .bar-fill{height:100%;background:var(--green);border-radius:20px;width:0%;transition:width .4s ease}
+    /* Results */
+    .results-hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:1rem}
+    .results-title{font-size:15px;font-weight:600;color:var(--text)}
+    .btn-zip{background:var(--green);color:#fff;border:none;border-radius:var(--radius);padding:8px 16px;font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font)}
+    .btn-zip:hover{background:var(--green-dark)}
+    .results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+    .result-card{background:var(--bg);border:.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;transition:border-color .15s}
+    .result-card:hover{border-color:var(--green-mid)}
+    .result-img-wrap{position:relative;aspect-ratio:1;background:var(--bg2);overflow:hidden}
+    .result-img-wrap img{width:100%;height:100%;object-fit:cover;display:block}
+    .result-badge{position:absolute;top:8px;left:8px;background:rgba(0,0,0,.55);color:#fff;font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px}
+    .result-body{padding:10px 12px}
+    .result-desc{font-size:12px;color:var(--text2);margin-bottom:8px;line-height:1.5}
+    .result-actions{display:flex;gap:6px}
+    .btn-dl{flex:1;background:var(--green);color:#fff;border:none;border-radius:var(--radius);padding:7px;font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font)}
+    .btn-dl:hover{background:var(--green-dark)}
+    .btn-dl:disabled{background:var(--bg3);color:var(--text3);cursor:not-allowed}
+    .btn-eye{background:var(--bg2);color:var(--text2);border:.5px solid var(--border);border-radius:var(--radius);padding:7px 10px;font-size:12px;cursor:pointer;font-family:var(--font)}
+    /* Boxes */
+    .warn-box{background:var(--amber-light);border:.5px solid var(--amber-mid);border-radius:var(--radius);padding:10px 14px;font-size:13px;color:var(--amber-deep);margin-bottom:1rem;line-height:1.6}
+    .info-box{background:var(--green-light);border:.5px solid var(--green-mid);border-radius:var(--radius);padding:10px 14px;font-size:13px;color:var(--green-deep);margin-bottom:1rem;line-height:1.6}
+    .saved-msg{font-size:12px;color:var(--green);margin-top:4px}
+    /* Setup */
+    .setup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:flex;align-items:center;justify-content:center;padding:1rem}
+    .setup-modal{background:var(--bg);border-radius:var(--radius-lg);padding:1.5rem;width:100%;max-width:480px}
+    .setup-modal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem}
+    .setup-modal-title{font-size:16px;font-weight:600;color:var(--text)}
+    .setup-close{background:none;border:none;font-size:18px;color:var(--text2);cursor:pointer}
+    .setup-body{display:flex;flex-direction:column;gap:8px}
+    .wh-row{display:flex;gap:8px}
+    .wh-row input{flex:1}
+    .setup-note{font-size:12px;color:var(--text2);line-height:1.6;padding:10px;background:var(--bg2);border-radius:var(--radius)}
+    .setup-fab{position:fixed;bottom:24px;right:24px;width:48px;height:48px;border-radius:50%;background:var(--text);color:var(--bg);border:none;font-size:20px;cursor:pointer;z-index:90}
+    .setup-fab:hover{background:var(--green)}
+    /* Fullscreen */
+    .fs-overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:200;display:flex;align-items:center;justify-content:center;cursor:pointer}
+    .fs-overlay img{max-width:90vw;max-height:90vh;object-fit:contain;border-radius:var(--radius)}
+    @media(max-width:480px){.preview-grid{grid-template-columns:1fr}.results-grid{grid-template-columns:1fr 1fr}.theme-grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}.prog-lbl{display:none}}
   </style>
 </head>
 <body>
@@ -147,11 +152,11 @@
       <div class="top-sub">Background removal · Scene generation · HD download</div>
     </div>
     <div class="header-right">
-      <span id="backend-status" class="status-pill status-unk">⬤ checking...</span>
+      <span id="backend-status" class="status-pill s-unk">⬤ checking...</span>
     </div>
   </header>
 
-  <div class="progress-bar">
+  <div class="prog-bar">
     <div class="prog-step active" id="prog-1"><div class="prog-num">1</div><div class="prog-lbl">Upload</div></div>
     <div class="prog-line"></div>
     <div class="prog-step" id="prog-2"><div class="prog-num">2</div><div class="prog-lbl">Customize</div></div>
@@ -161,49 +166,49 @@
     <div class="prog-step" id="prog-4"><div class="prog-num">4</div><div class="prog-lbl">Download</div></div>
   </div>
 
-  <!-- STEP 1 -->
-  <section class="step-section" id="step-1">
-    <div class="step-header">
-      <div class="step-num-badge">1</div>
-      <div><div class="step-title">Upload your product image</div><div class="step-sub">AI removes the background automatically in your browser</div></div>
+  <!-- STEP 1: UPLOAD -->
+  <section class="step" id="step-1">
+    <div class="step-hdr">
+      <div class="step-badge">1</div>
+      <div><div class="step-title">Upload your product image</div><div class="step-sub">AI removes the background via Remove.bg</div></div>
     </div>
     <div class="upload-zone" id="drop-zone">
       <input type="file" id="file-input" accept="image/png,image/jpeg,image/webp">
-      <div class="upload-icon">&#8679;</div>
+      <div class="uz-icon">&#8679;</div>
       <div class="uz-title">Click to upload or drag & drop</div>
-      <div class="uz-sub">JPG · PNG · WEBP — recommended min 512×512px</div>
+      <div class="uz-sub">JPG · PNG · WEBP · recommended 512×512px minimum</div>
     </div>
     <div id="preview-area" style="display:none">
       <div class="preview-grid">
         <div class="preview-card">
-          <div class="preview-label">Original</div>
+          <div class="preview-lbl">Original</div>
           <img id="original-img" src="" alt="Original">
         </div>
         <div class="preview-card">
-          <div class="preview-label">Background removed</div>
-          <div id="removing-bg" class="removing-msg">
+          <div class="preview-lbl">Background removed</div>
+          <div id="removing-div" class="removing">
             <div class="spinner"></div>
-            <span id="removing-status">Initializing AI model...</span>
-            <div class="progress-ring-wrap"><div class="progress-ring-fill" id="removal-progress-bar"></div></div>
+            <span id="removing-status">Removing background...</span>
+            <div class="prog-wrap"><div class="prog-fill" id="removal-prog"></div></div>
           </div>
-          <img id="removed-bg-img" src="" alt="No background" style="display:none">
+          <img id="removed-img" src="" alt="Background removed" style="display:none">
         </div>
       </div>
-      <button class="btn-ghost" onclick="resetUpload()">Upload different image</button>
+      <button class="btn-ghost" onclick="resetAll()">Upload different image</button>
     </div>
   </section>
 
-  <!-- STEP 2 -->
-  <section class="step-section locked" id="step-2">
-    <div class="step-header">
-      <div class="step-num-badge">2</div>
-      <div><div class="step-title">Customize your scene</div><div class="step-sub">Choose background, add objects, set the mood</div></div>
+  <!-- STEP 2: CUSTOMIZE -->
+  <section class="step locked" id="step-2">
+    <div class="step-hdr">
+      <div class="step-badge">2</div>
+      <div><div class="step-title">Customize your scene</div><div class="step-sub">Choose background, objects and mood</div></div>
     </div>
-    <div class="form-section">
-      <label class="lbl">Background theme <span class="required">*</span></label>
+    <div class="form-sec">
+      <label class="lbl">Background theme <span class="req">*</span></label>
       <div class="theme-grid" id="theme-grid">
         <div class="theme-chip active" data-theme="tropical beach with palm trees and golden sand">🏖 Tropical beach</div>
-        <div class="theme-chip" data-theme="lush green forest with dappled sunlight">🌿 Forest</div>
+        <div class="theme-chip" data-theme="lush green forest with dappled sunlight rays">🌿 Forest</div>
         <div class="theme-chip" data-theme="modern minimalist white kitchen counter">🍽 Kitchen</div>
         <div class="theme-chip" data-theme="vibrant gym and fitness studio">💪 Gym</div>
         <div class="theme-chip" data-theme="cozy wellness spa with candles and plants">🧘 Wellness spa</div>
@@ -215,23 +220,23 @@
       </div>
       <input type="text" id="custom-theme" placeholder="Or describe your own background theme...">
     </div>
-    <div class="form-section">
-      <label class="lbl">Add objects <span class="optional">(optional)</span></label>
-      <div class="objects-grid" id="objects-grid">
+    <div class="form-sec">
+      <label class="lbl">Add objects <span class="opt">(optional)</span></label>
+      <div class="obj-row" id="obj-grid">
         <div class="obj-chip" data-obj="fresh mint leaves and ice cubes">🍃 Mint & ice</div>
-        <div class="obj-chip" data-obj="sliced citrus fruits like lemon and orange">🍋 Citrus</div>
+        <div class="obj-chip" data-obj="sliced citrus fruits lemon and orange">🍋 Citrus</div>
         <div class="obj-chip" data-obj="fizzy bubbles and water splashes">💧 Bubbles</div>
         <div class="obj-chip" data-obj="tropical flowers and hibiscus">🌺 Flowers</div>
         <div class="obj-chip" data-obj="glass with ice and condensation">🥤 Glass</div>
         <div class="obj-chip" data-obj="green plants and leaves">🌱 Plants</div>
         <div class="obj-chip" data-obj="wooden surface and natural textures">🪵 Textures</div>
-        <div class="obj-chip" data-obj="colorful confetti and celebration elements">🎉 Confetti</div>
+        <div class="obj-chip" data-obj="colorful confetti">🎉 Confetti</div>
       </div>
       <input type="text" id="custom-objects" placeholder="Or describe custom objects...">
     </div>
-    <div class="form-section">
+    <div class="form-sec">
       <label class="lbl">Lighting & mood</label>
-      <div class="mood-row">
+      <div class="mood-row" id="mood-row">
         <div class="mood-chip active" data-mood="bright and vibrant with natural sunlight">☀ Bright</div>
         <div class="mood-chip" data-mood="warm golden hour lighting">🌅 Golden hour</div>
         <div class="mood-chip" data-mood="cool and refreshing blue tones">❄ Cool & fresh</div>
@@ -239,35 +244,35 @@
         <div class="mood-chip" data-mood="soft diffused natural light">🌤 Soft natural</div>
       </div>
     </div>
-    <div class="form-section">
+    <div class="form-sec">
       <label class="lbl">Number of variations</label>
       <div class="count-row">
-        <input type="range" id="variation-count" min="4" max="12" value="10" step="2" oninput="document.getElementById('count-display').textContent=this.value+' variations'">
-        <span class="count-display" id="count-display">10 variations</span>
+        <input type="range" id="var-count" min="4" max="12" value="10" step="2" oninput="document.getElementById('count-val').textContent=this.value+' variations'">
+        <span class="count-val" id="count-val">10 variations</span>
       </div>
     </div>
   </section>
 
-  <!-- STEP 3 -->
-  <section class="step-section locked" id="step-3">
-    <div class="step-header">
-      <div class="step-num-badge">3</div>
-      <div><div class="step-title">Generate AI edited versions</div><div class="step-sub">HD 1024×1024 images powered by FLUX on Hugging Face</div></div>
+  <!-- STEP 3: GENERATE -->
+  <section class="step locked" id="step-3">
+    <div class="step-hdr">
+      <div class="step-badge">3</div>
+      <div><div class="step-title">Generate AI edited versions</div><div class="step-sub">HD 1024×1024 · powered by FLUX on Hugging Face</div></div>
     </div>
-    <div id="setup-warning" class="warn-box" style="display:none">⚠ Backend URL not set. <a href="#" onclick="showSetup();return false;" style="color:inherit;font-weight:500">Click here to set it up.</a></div>
-    <button class="btn-generate" id="gen-btn" onclick="generateImages()">✦ Generate AI Suggestions</button>
+    <div id="setup-warn" class="warn-box" style="display:none">⚠ Backend URL not set. <a href="#" onclick="showSetup();return false;" style="color:inherit;font-weight:500">Click here to configure.</a></div>
+    <button class="btn-gen" id="gen-btn" onclick="generateImages()">✦ Generate AI Suggestions</button>
     <div id="loading-area" style="display:none">
       <div class="loading-card">
-        <div class="loading-spinner"></div>
+        <div class="big-spinner"></div>
         <div class="loading-title">Generating your images...</div>
-        <div class="loading-sub" id="loading-progress">Starting...</div>
-        <div class="loading-bar-wrap"><div class="loading-bar" id="loading-bar"></div></div>
+        <div class="loading-sub" id="loading-sub">Starting...</div>
+        <div class="bar-wrap"><div class="bar-fill" id="gen-bar"></div></div>
       </div>
     </div>
     <div id="results-area" style="display:none">
-      <div class="results-header">
+      <div class="results-hdr">
         <div class="results-title" id="results-title">Generated variations</div>
-        <button class="btn-download-all" onclick="downloadAll()">⬇ Download all ZIP</button>
+        <button class="btn-zip" onclick="downloadAll()">⬇ Download all ZIP</button>
       </div>
       <div class="results-grid" id="results-grid"></div>
     </div>
@@ -276,18 +281,24 @@
   <!-- Setup modal -->
   <div id="setup-panel" class="setup-overlay" style="display:none">
     <div class="setup-modal">
-      <div class="setup-modal-header">
+      <div class="setup-modal-hdr">
         <div class="setup-modal-title">Backend Setup</div>
         <button class="setup-close" onclick="hideSetup()">✕</button>
       </div>
-      <div class="setup-modal-body">
+      <div class="setup-body">
         <label class="lbl">Render Backend URL</label>
-        <div class="webhook-row">
-          <input type="text" id="backend-url-input" placeholder="https://your-app.onrender.com">
+        <div class="wh-row">
+          <input type="text" id="backend-input" placeholder="https://your-app.onrender.com">
           <button class="btn-green" onclick="saveBackend()">Save</button>
         </div>
-        <div id="backend-saved-msg" class="saved-msg" style="display:none">✓ Saved!</div>
-        <div class="setup-note">Same Render backend as your Instagram Content AI app. Make sure <strong>HF_TOKEN</strong> is set in your Render environment variables.</div>
+        <div id="saved-msg" class="saved-msg" style="display:none">✓ Saved!</div>
+        <div class="setup-note">
+          Same Render backend as your Instagram Content AI app.<br><br>
+          Required environment variables in Render:<br>
+          • <strong>ANTHROPIC_API_KEY</strong> — for content generation<br>
+          • <strong>HF_TOKEN</strong> — for image generation (huggingface.co)<br>
+          • <strong>REMOVEBG_API_KEY</strong> — for background removal (remove.bg/api)
+        </div>
       </div>
     </div>
   </div>
@@ -295,305 +306,287 @@
 
 </div>
 
-<!-- Background removal using ES module — the correct way to load @imgly -->
-<script type="module">
-  import { removeBackground } from 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/dist/background-removal.js';
-
-  /* Make removeBackground available globally */
-  window._removeBg = async function(blob, onProgress) {
-    return await removeBackground(blob, {
-      publicPath: 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/dist/',
-      progress: onProgress,
-      model: 'medium'
-    });
-  };
-  window._removeBgReady = true;
-  console.log('Background removal ready');
-</script>
-
 <script>
-/* ── State ── */
-var BACKEND_URL     = localStorage.getItem('img_backend_url') || '';
-var originalFile    = null;
-var removedBgB64    = null;
-var generatedImages = [];
-var selectedObjects = new Set();
-var selectedTheme   = 'tropical beach with palm trees and golden sand';
-var selectedMood    = 'bright and vibrant with natural sunlight';
+var BACKEND   = localStorage.getItem('img_backend') || '';
+var origFile  = null;
+var removedB64= null;
+var genImages = [];
+var selObjs   = new Set();
+var selTheme  = 'tropical beach with palm trees and golden sand';
+var selMood   = 'bright and vibrant with natural sunlight';
+var STYLES    = ['photorealistic product photography','lifestyle brand photography','editorial magazine style','vibrant social media style','clean commercial photography','artistic product shot','dynamic action shot','flat lay overhead view','close-up detail shot','wide environmental shot','golden ratio composition','rule of thirds composition'];
 
 /* ── Init ── */
-document.addEventListener('DOMContentLoaded', function () {
-  setupUpload();
-  setupChips();
-  checkBackend();
-  if (BACKEND_URL) document.getElementById('backend-url-input').value = BACKEND_URL;
-  if (!BACKEND_URL) document.getElementById('setup-warning').style.display = 'block';
+document.addEventListener('DOMContentLoaded', function(){
+  setupUpload(); setupChips(); checkBackend();
+  if(BACKEND) document.getElementById('backend-input').value = BACKEND;
+  if(!BACKEND) document.getElementById('setup-warn').style.display = 'block';
 });
 
-async function checkBackend() {
+async function checkBackend(){
   var pill = document.getElementById('backend-status');
-  if (!BACKEND_URL) { pill.textContent = '⬤ not configured'; pill.className = 'status-pill status-err'; return; }
-  try {
-    var r = await fetch(BACKEND_URL + '/');
-    pill.textContent = r.ok ? '⬤ backend connected' : '⬤ backend error';
-    pill.className   = r.ok ? 'status-pill status-ok' : 'status-pill status-err';
-  } catch { pill.textContent = '⬤ unreachable'; pill.className = 'status-pill status-err'; }
+  if(!BACKEND){ pill.textContent='⬤ not configured'; pill.className='status-pill s-err'; return; }
+  try{
+    var r = await fetch(BACKEND+'/');
+    if(r.ok){
+      var d = await r.json();
+      var svcs = [];
+      if(d.services){ if(!d.services.removebg) svcs.push('no Remove.bg key'); if(!d.services.huggingface) svcs.push('no HF token'); }
+      pill.textContent = svcs.length ? '⬤ connected ('+svcs.join(', ')+')' : '⬤ backend connected';
+      pill.className   = svcs.length ? 'status-pill s-unk' : 'status-pill s-ok';
+    } else throw new Error();
+  } catch{ pill.textContent='⬤ unreachable'; pill.className='status-pill s-err'; }
 }
 
 /* ── Upload ── */
-function setupUpload() {
-  var dz = document.getElementById('drop-zone');
-  var fi = document.getElementById('file-input');
-  dz.addEventListener('click', function () { fi.click(); });
-  dz.addEventListener('dragover', function (e) { e.preventDefault(); dz.style.borderColor = 'var(--green-mid)'; });
-  dz.addEventListener('dragleave', function () { dz.style.borderColor = ''; });
-  dz.addEventListener('drop', function (e) {
-    e.preventDefault(); dz.style.borderColor = '';
-    var f = e.dataTransfer.files[0];
-    if (f && f.type.startsWith('image/')) handleFile(f);
-  });
-  fi.addEventListener('change', function (e) { if (e.target.files[0]) handleFile(e.target.files[0]); e.target.value = ''; });
+function setupUpload(){
+  var dz=document.getElementById('drop-zone'), fi=document.getElementById('file-input');
+  dz.addEventListener('click',function(){ fi.click(); });
+  dz.addEventListener('dragover',function(e){ e.preventDefault(); dz.style.borderColor='var(--green-mid)'; });
+  dz.addEventListener('dragleave',function(){ dz.style.borderColor=''; });
+  dz.addEventListener('drop',function(e){ e.preventDefault(); dz.style.borderColor=''; var f=e.dataTransfer.files[0]; if(f&&f.type.startsWith('image/')) handleFile(f); });
+  fi.addEventListener('change',function(e){ if(e.target.files[0]) handleFile(e.target.files[0]); e.target.value=''; });
 }
 
-function handleFile(file) {
-  originalFile = file;
-  var reader = new FileReader();
-  reader.onload = function (ev) {
+function handleFile(file){
+  origFile = file;
+  var r = new FileReader();
+  r.onload = function(ev){
     document.getElementById('original-img').src = ev.target.result;
     document.getElementById('preview-area').style.display = 'block';
     document.getElementById('drop-zone').style.display = 'none';
     setProgress(1);
-    startBgRemoval(file);
+    removeBg(file);
   };
-  reader.readAsDataURL(file);
+  r.readAsDataURL(file);
 }
 
-function resetUpload() {
-  originalFile = null; removedBgB64 = null; generatedImages = [];
-  document.getElementById('preview-area').style.display = 'none';
-  document.getElementById('drop-zone').style.display = 'block';
-  document.getElementById('removed-bg-img').style.display = 'none';
-  document.getElementById('removing-bg').style.display = 'flex';
-  document.getElementById('results-area').style.display = 'none';
-  document.getElementById('loading-area').style.display = 'none';
-  document.getElementById('gen-btn').disabled = false;
+function resetAll(){
+  origFile=null; removedB64=null; genImages=[];
+  document.getElementById('preview-area').style.display='none';
+  document.getElementById('drop-zone').style.display='block';
+  document.getElementById('removed-img').style.display='none';
+  document.getElementById('removing-div').style.display='flex';
+  document.getElementById('results-area').style.display='none';
+  document.getElementById('loading-area').style.display='none';
+  document.getElementById('gen-btn').disabled=false;
+  document.getElementById('removal-prog').style.width='0%';
   lockStep(2); lockStep(3); setProgress(0);
 }
 
-/* ── Background removal ── */
-async function startBgRemoval(file) {
-  var statusEl  = document.getElementById('removing-status');
-  var progressEl= document.getElementById('removal-progress-bar');
-  var removingEl= document.getElementById('removing-bg');
-  var removedEl = document.getElementById('removed-bg-img');
+/* ── Background Removal ── */
+async function removeBg(file){
+  var statusEl = document.getElementById('removing-status');
+  var progEl   = document.getElementById('removal-prog');
+  var divEl    = document.getElementById('removing-div');
+  var imgEl    = document.getElementById('removed-img');
 
-  removingEl.style.display = 'flex';
-  removedEl.style.display  = 'none';
-  statusEl.textContent     = 'Loading AI model...';
-  progressEl.style.width   = '0%';
+  statusEl.textContent = 'Removing background...';
+  progEl.style.width   = '30%';
 
-  /* Wait up to 15s for the ES module to load */
-  var waited = 0;
-  while (!window._removeBgReady && waited < 15000) {
-    await sleep(300); waited += 300;
+  if(!BACKEND){
+    statusEl.textContent = 'No backend — using original';
+    useOriginal(file); return;
   }
 
-  if (!window._removeBgReady || !window._removeBg) {
-    /* Fallback — use original image */
-    statusEl.textContent = 'Model unavailable — using original';
-    useOriginalAsFallback(file);
-    return;
-  }
-
-  try {
-    statusEl.textContent = 'Removing background...';
-
-    var resultBlob = await window._removeBg(file, function(key, current, total) {
-      if (total > 0) {
-        var pct = Math.round((current / total) * 100);
-        progressEl.style.width = pct + '%';
-        statusEl.textContent = 'Removing background... ' + pct + '%';
-      }
+  try{
+    var reader = new FileReader();
+    var b64 = await new Promise(function(resolve){
+      reader.onload = function(ev){ resolve(ev.target.result.split(',')[1]); };
+      reader.readAsDataURL(file);
     });
 
-    progressEl.style.width = '100%';
-    statusEl.textContent   = '✓ Background removed!';
+    progEl.style.width = '60%';
+    statusEl.textContent = 'Processing with Remove.bg...';
 
-    /* Convert blob to base64 */
-    var reader = new FileReader();
-    reader.onload = function (ev) {
-      var dataUrl  = ev.target.result;
-      removedBgB64 = dataUrl.split(',')[1];
-      removedEl.src            = dataUrl;
-      removedEl.style.display  = 'block';
-      removingEl.style.display = 'none';
-      unlockStep(2); unlockStep(3); setProgress(2);
-    };
-    reader.readAsDataURL(resultBlob);
+    var resp = await fetch(BACKEND+'/remove-bg',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ image: b64, mtype: file.type||'image/jpeg' })
+    });
 
-  } catch (err) {
-    console.error('BG removal error:', err);
-    statusEl.textContent = 'Removal failed — using original';
-    useOriginalAsFallback(file);
+    if(!resp.ok) throw new Error('Server error '+resp.status);
+    var data = await resp.json();
+
+    progEl.style.width = '100%';
+
+    if(data.removed){
+      removedB64 = data.image;
+      statusEl.textContent = '✓ Background removed!';
+      imgEl.src = 'data:image/png;base64,'+data.image;
+    } else {
+      /* Remove.bg not configured — use original but still continue */
+      removedB64 = b64;
+      statusEl.textContent = '⚠ Using original (set REMOVEBG_API_KEY for removal)';
+      imgEl.src = 'data:'+file.type+';base64,'+b64;
+    }
+
+    imgEl.style.display = 'block';
+    divEl.style.display = 'none';
+    unlockStep(2); unlockStep(3); setProgress(2);
+
+  } catch(err){
+    console.error('BG removal error:',err);
+    statusEl.textContent = 'Error — using original image';
+    useOriginal(file);
   }
 }
 
-function useOriginalAsFallback(file) {
-  var reader = new FileReader();
-  reader.onload = function (ev) {
-    var dataUrl  = ev.target.result;
-    removedBgB64 = dataUrl.split(',')[1];
-    var removedEl = document.getElementById('removed-bg-img');
-    removedEl.src            = dataUrl;
-    removedEl.style.display  = 'block';
-    document.getElementById('removing-bg').style.display = 'none';
+function useOriginal(file){
+  var r = new FileReader();
+  r.onload = function(ev){
+    removedB64 = ev.target.result.split(',')[1];
+    var imgEl = document.getElementById('removed-img');
+    imgEl.src = ev.target.result;
+    imgEl.style.display = 'block';
+    document.getElementById('removing-div').style.display = 'none';
+    document.getElementById('removal-prog').style.width = '100%';
     unlockStep(2); unlockStep(3); setProgress(2);
   };
-  reader.readAsDataURL(file);
+  r.readAsDataURL(file);
 }
 
 /* ── Chips ── */
-function setupChips() {
-  document.getElementById('theme-grid').addEventListener('click', function (e) {
-    var c = e.target.closest('.theme-chip'); if (!c) return;
-    document.querySelectorAll('.theme-chip').forEach(function (x) { x.classList.remove('active'); });
-    c.classList.add('active'); selectedTheme = c.dataset.theme;
-    document.getElementById('custom-theme').value = '';
+function setupChips(){
+  document.getElementById('theme-grid').addEventListener('click',function(e){
+    var c=e.target.closest('.theme-chip'); if(!c) return;
+    document.querySelectorAll('.theme-chip').forEach(function(x){x.classList.remove('active');});
+    c.classList.add('active'); selTheme=c.dataset.theme;
+    document.getElementById('custom-theme').value='';
   });
-  document.getElementById('custom-theme').addEventListener('input', function () {
-    if (this.value.trim()) { document.querySelectorAll('.theme-chip').forEach(function (x) { x.classList.remove('active'); }); selectedTheme = this.value.trim(); }
+  document.getElementById('custom-theme').addEventListener('input',function(){
+    if(this.value.trim()){ document.querySelectorAll('.theme-chip').forEach(function(x){x.classList.remove('active');}); selTheme=this.value.trim(); }
   });
-  document.getElementById('objects-grid').addEventListener('click', function (e) {
-    var c = e.target.closest('.obj-chip'); if (!c) return;
+  document.getElementById('obj-grid').addEventListener('click',function(e){
+    var c=e.target.closest('.obj-chip'); if(!c) return;
     c.classList.toggle('active');
-    if (c.classList.contains('active')) selectedObjects.add(c.dataset.obj);
-    else selectedObjects.delete(c.dataset.obj);
+    if(c.classList.contains('active')) selObjs.add(c.dataset.obj);
+    else selObjs.delete(c.dataset.obj);
   });
-  document.querySelector('.mood-row').addEventListener('click', function (e) {
-    var c = e.target.closest('.mood-chip'); if (!c) return;
-    document.querySelectorAll('.mood-chip').forEach(function (x) { x.classList.remove('active'); });
-    c.classList.add('active'); selectedMood = c.dataset.mood;
+  document.getElementById('mood-row').addEventListener('click',function(e){
+    var c=e.target.closest('.mood-chip'); if(!c) return;
+    document.querySelectorAll('.mood-chip').forEach(function(x){x.classList.remove('active');});
+    c.classList.add('active'); selMood=c.dataset.mood;
   });
 }
 
 /* ── Generate ── */
-async function generateImages() {
-  if (!BACKEND_URL) { document.getElementById('setup-warning').style.display = 'block'; showSetup(); return; }
-  var theme   = document.getElementById('custom-theme').value.trim() || selectedTheme;
-  var objects = document.getElementById('custom-objects').value.trim() || Array.from(selectedObjects).join(', ');
-  var count   = parseInt(document.getElementById('variation-count').value);
-  var imgB64  = removedBgB64 || document.getElementById('original-img').src.split(',')[1];
+async function generateImages(){
+  if(!BACKEND){ document.getElementById('setup-warn').style.display='block'; showSetup(); return; }
+  var theme   = document.getElementById('custom-theme').value.trim()||selTheme;
+  var objects = document.getElementById('custom-objects').value.trim()||Array.from(selObjs).join(', ');
+  var count   = parseInt(document.getElementById('var-count').value);
+  var imgB64  = removedB64||document.getElementById('original-img').src.split(',')[1];
   var btn     = document.getElementById('gen-btn');
-  btn.disabled = true;
-  document.getElementById('results-area').style.display = 'none';
-  document.getElementById('loading-area').style.display = 'block';
+  btn.disabled=true;
+  document.getElementById('results-area').style.display='none';
+  document.getElementById('loading-area').style.display='block';
   setProgress(3);
 
-  var results = [];
-  var bar     = document.getElementById('loading-bar');
-  var prog    = document.getElementById('loading-progress');
-  var styles  = ['photorealistic product photography','lifestyle brand photography','editorial magazine style','vibrant social media style','clean commercial photography','artistic product shot','dynamic action shot','flat lay overhead view','close-up detail shot','wide environmental shot','golden ratio composition','rule of thirds composition'];
+  var results=[], bar=document.getElementById('gen-bar'), sub=document.getElementById('loading-sub');
 
-  for (var i = 0; i < count; i++) {
-    bar.style.width  = Math.round((i / count) * 100) + '%';
-    prog.textContent = 'Generating image ' + (i + 1) + ' of ' + count + '...';
-    try {
-      var resp = await fetch(BACKEND_URL + '/edit-image', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: imgB64, theme, objects, mood: selectedMood, style: styles[i % styles.length], index: i })
+  for(var i=0;i<count;i++){
+    bar.style.width=Math.round((i/count)*100)+'%';
+    sub.textContent='Generating image '+(i+1)+' of '+count+'...';
+    try{
+      var resp = await fetch(BACKEND+'/edit-image',{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ image:imgB64, theme, objects, mood:selMood, style:STYLES[i%STYLES.length], index:i })
       });
-      if (!resp.ok) throw new Error('Server error ' + resp.status);
-      var data   = await resp.json();
-      var imgUrl = data.url || ('data:image/png;base64,' + data.b64);
-      results.push({ url: imgUrl, b64: data.b64, desc: styles[i % styles.length] + ' · ' + theme, index: i + 1 });
-    } catch (err) {
-      console.error('Image ' + (i+1) + ' failed:', err);
-      results.push({ url: null, b64: null, desc: 'Failed', index: i + 1, error: true });
+      if(!resp.ok) throw new Error('Server error '+resp.status);
+      var d = await resp.json();
+      var url = d.url||(d.b64?'data:image/png;base64,'+d.b64:null);
+      if(!url) throw new Error('No image in response');
+      results.push({ url, b64:d.b64, desc:STYLES[i%STYLES.length]+' · '+theme, index:i+1 });
+    } catch(err){
+      console.error('Image '+(i+1)+' failed:',err);
+      results.push({ url:null, b64:null, desc:'Failed', index:i+1, error:true });
     }
-    bar.style.width = Math.round(((i + 1) / count) * 100) + '%';
+    bar.style.width=Math.round(((i+1)/count)*100)+'%';
   }
 
-  generatedImages  = results;
-  bar.style.width  = '100%';
-  prog.textContent = 'Done!';
-  setTimeout(function () {
-    document.getElementById('loading-area').style.display = 'none';
-    renderResults(results); setProgress(4); btn.disabled = false;
-  }, 400);
+  genImages=results; bar.style.width='100%'; sub.textContent='Done!';
+  setTimeout(function(){
+    document.getElementById('loading-area').style.display='none';
+    renderResults(results); setProgress(4); btn.disabled=false;
+  },400);
 }
 
-/* ── Render Results ── */
-function renderResults(results) {
-  var good = results.filter(function (r) { return !r.error && r.url; });
-  document.getElementById('results-title').textContent = good.length + ' of ' + results.length + ' images generated';
-  document.getElementById('results-grid').innerHTML = results.map(function (r, idx) {
-    if (r.error || !r.url) return '<div class="result-card"><div class="result-img-wrap" style="display:flex;align-items:center;justify-content:center;background:var(--red-light)"><span style="font-size:12px;color:var(--red-deep);padding:1rem;text-align:center">Generation failed</span></div><div class="result-card-body"><div class="result-desc">Image ' + r.index + ' failed</div></div></div>';
-    return '<div class="result-card" id="card-' + idx + '"><div class="result-img-wrap"><img src="' + r.url + '" alt="Variation ' + r.index + '" loading="lazy"><span class="result-badge">HD #' + r.index + '</span></div><div class="result-card-body"><div class="result-desc">' + r.desc + '</div><div class="result-actions"><button class="btn-dl" onclick="downloadImage(' + idx + ')">⬇ PNG</button><button class="btn-preview" onclick="previewImage(\'' + r.url + '\')">⤢</button></div></div></div>';
+/* ── Render ── */
+function renderResults(results){
+  var good=results.filter(function(r){return !r.error&&r.url;});
+  document.getElementById('results-title').textContent=good.length+' of '+results.length+' images generated';
+  document.getElementById('results-grid').innerHTML=results.map(function(r,idx){
+    if(r.error||!r.url) return '<div class="result-card"><div class="result-img-wrap" style="display:flex;align-items:center;justify-content:center;background:var(--red-light)"><span style="font-size:12px;color:var(--red-deep);padding:1rem;text-align:center">Failed</span></div><div class="result-body"><div class="result-desc">Image '+r.index+' failed</div></div></div>';
+    return '<div class="result-card" id="card-'+idx+'"><div class="result-img-wrap"><img src="'+r.url+'" alt="Variation '+r.index+'" loading="lazy"><span class="result-badge">HD #'+r.index+'</span></div><div class="result-body"><div class="result-desc">'+r.desc+'</div><div class="result-actions"><button class="btn-dl" onclick="dlOne('+idx+')">⬇ PNG</button><button class="btn-eye" onclick="preview(\''+r.url+'\')">⤢</button></div></div></div>';
   }).join('');
-  document.getElementById('results-area').style.display = 'block';
-  document.getElementById('results-area').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.getElementById('results-area').style.display='block';
+  document.getElementById('results-area').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 /* ── Download single ── */
-async function downloadImage(idx) {
-  var img = generatedImages[idx]; if (!img || img.error) return;
-  var btn = document.querySelector('#card-' + idx + ' .btn-dl');
-  if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
-  try {
+async function dlOne(idx){
+  var img=genImages[idx]; if(!img||img.error) return;
+  var btn=document.querySelector('#card-'+idx+' .btn-dl');
+  if(btn){btn.textContent='⏳';btn.disabled=true;}
+  try{
     var b64;
-    if (img.b64) { b64 = img.b64; }
-    else if (img.url && img.url.startsWith('data:')) { b64 = img.url.split(',')[1]; }
-    else {
-      var r = await fetch(BACKEND_URL + '/proxy-image', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: img.url, b64: img.b64 }) });
-      if (!r.ok) throw new Error('proxy failed');
-      b64 = (await r.json()).image;
+    if(img.b64) b64=img.b64;
+    else if(img.url&&img.url.startsWith('data:')) b64=img.url.split(',')[1];
+    else{
+      var r=await fetch(BACKEND+'/proxy-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:img.url,b64:img.b64})});
+      if(!r.ok) throw new Error('proxy failed');
+      b64=(await r.json()).image;
     }
-    var a = document.createElement('a');
-    a.href = 'data:image/png;base64,' + b64;
-    a.download = 'probiotic-fizzy-hd-' + img.index + '.png';
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  } catch (err) { if (img.url) window.open(img.url, '_blank'); }
-  if (btn) { btn.textContent = '⬇ PNG'; btn.disabled = false; }
+    var a=document.createElement('a');
+    a.href='data:image/png;base64,'+b64;
+    a.download='probiotic-fizzy-hd-'+img.index+'.png';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+  } catch(err){ if(img.url) window.open(img.url,'_blank'); }
+  if(btn){btn.textContent='⬇ PNG';btn.disabled=false;}
 }
 
-/* ── Download all ZIP ── */
-async function downloadAll() {
-  var btn = document.getElementById('download-all-btn') || { textContent: '', disabled: false };
-  btn.textContent = '⏳ ZIP...'; btn.disabled = true;
-  var valid = generatedImages.filter(function (r) { return !r.error && r.url; });
-  try {
-    var r = await fetch(BACKEND_URL + '/download-all', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ images: valid.map(function (r) { return { url: r.url, b64: r.b64, index: r.index }; }) }) });
-    if (!r.ok) throw new Error('ZIP failed');
-    var d = await r.json();
-    var a = document.createElement('a'); a.href = 'data:application/zip;base64,' + d.zip; a.download = 'probiotic-fizzy-ai-images.zip';
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  } catch { for (var i = 0; i < valid.length; i++) { await downloadImage(generatedImages.indexOf(valid[i])); await sleep(300); } }
-  btn.textContent = '⬇ Download all ZIP'; btn.disabled = false;
+/* ── Download all ── */
+async function downloadAll(){
+  var btn=document.querySelector('.btn-zip');
+  if(btn){btn.textContent='⏳ ZIP...';btn.disabled=true;}
+  var valid=genImages.filter(function(r){return !r.error&&r.url;});
+  try{
+    var r=await fetch(BACKEND+'/download-all',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({images:valid.map(function(r){return{url:r.url,b64:r.b64,index:r.index};})})});
+    if(!r.ok) throw new Error('ZIP failed');
+    var d=await r.json();
+    var a=document.createElement('a');a.href='data:application/zip;base64,'+d.zip;a.download='probiotic-fizzy-ai-images.zip';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+  } catch{
+    for(var i=0;i<valid.length;i++){ await dlOne(genImages.indexOf(valid[i])); await sleep(300); }
+  }
+  if(btn){btn.textContent='⬇ Download all ZIP';btn.disabled=false;}
 }
 
 /* ── Preview ── */
-function previewImage(url) {
-  var o = document.createElement('div'); o.className = 'fullscreen-overlay';
-  o.innerHTML = '<img src="' + url + '">'; o.addEventListener('click', function () { document.body.removeChild(o); }); document.body.appendChild(o);
+function preview(url){
+  var o=document.createElement('div');o.className='fs-overlay';
+  o.innerHTML='<img src="'+url+'">';
+  o.addEventListener('click',function(){document.body.removeChild(o);});
+  document.body.appendChild(o);
 }
 
-/* ── Steps & Progress ── */
-function setProgress(step) {
-  for (var i = 1; i <= 4; i++) { var el = document.getElementById('prog-' + i); el.classList.remove('active','done'); if (i < step) el.classList.add('done'); else if (i === step) el.classList.add('active'); }
+/* ── Steps ── */
+function setProgress(step){
+  for(var i=1;i<=4;i++){var el=document.getElementById('prog-'+i);el.classList.remove('active','done');if(i<step)el.classList.add('done');else if(i===step)el.classList.add('active');}
 }
-function unlockStep(n) { document.getElementById('step-' + n).classList.remove('locked'); }
-function lockStep(n)   { document.getElementById('step-' + n).classList.add('locked'); }
-function sleep(ms)     { return new Promise(function (r) { setTimeout(r, ms); }); }
+function unlockStep(n){document.getElementById('step-'+n).classList.remove('locked');}
+function lockStep(n){document.getElementById('step-'+n).classList.add('locked');}
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
 
 /* ── Setup ── */
-function showSetup() { document.getElementById('setup-panel').style.display = 'flex'; }
-function hideSetup() { document.getElementById('setup-panel').style.display = 'none'; }
-function saveBackend() {
-  BACKEND_URL = document.getElementById('backend-url-input').value.trim().replace(/\/$/, '');
-  localStorage.setItem('img_backend_url', BACKEND_URL);
-  document.getElementById('backend-saved-msg').style.display = 'block';
-  document.getElementById('setup-warning').style.display = 'none';
-  setTimeout(function () { document.getElementById('backend-saved-msg').style.display = 'none'; }, 2000);
+function showSetup(){document.getElementById('setup-panel').style.display='flex';}
+function hideSetup(){document.getElementById('setup-panel').style.display='none';}
+function saveBackend(){
+  BACKEND=document.getElementById('backend-input').value.trim().replace(/\/$/,'');
+  localStorage.setItem('img_backend',BACKEND);
+  document.getElementById('saved-msg').style.display='block';
+  document.getElementById('setup-warn').style.display='none';
+  setTimeout(function(){document.getElementById('saved-msg').style.display='none';},2000);
   checkBackend(); hideSetup();
 }
 </script>
