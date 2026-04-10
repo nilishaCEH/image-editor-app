@@ -70,6 +70,16 @@
     .btn-gen{width:100%;padding:14px;font-size:15px;font-weight:600;background:var(--green);color:#fff;border:none;border-radius:var(--radius-lg);cursor:pointer;font-family:var(--font);transition:.15s;margin-bottom:1.5rem}
     .btn-gen:hover{background:var(--green-dark)}
     .btn-gen:disabled{background:var(--bg3);color:var(--text3);cursor:not-allowed}
+    .engine-card{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:10px 12px;cursor:pointer;transition:.15s;user-select:none}
+    .engine-card:hover{border-color:var(--green-mid)}
+    .engine-card.active{border-color:var(--green);background:var(--green-light)}
+    .engine-card.active-kling{border-color:#9B72F5;background:#F0EAFF}
+    .engine-card.active-flux{border-color:var(--text3);background:var(--bg2)}
+    .engine-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px}
+    .engine-desc{font-size:11px;color:var(--text2);line-height:1.5;margin-bottom:6px}
+    .engine-badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;background:var(--green-light);color:var(--green-deep);font-weight:500}
+    .engine-badge-purple{background:#F0EAFF;color:#3D1A8A}
+    .engine-badge-gray{background:var(--bg3);color:var(--text3)}
     .loading-card{background:var(--bg2);border-radius:var(--radius-lg);padding:2rem;text-align:center;border:.5px solid var(--border)}
     .big-spinner{width:40px;height:40px;border:3px solid var(--border2);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1rem}
     @keyframes spin{to{transform:rotate(360deg)}}
@@ -118,12 +128,11 @@
   </nav>
 
   <div class="how-it-works">
-    <strong>How this works — your product stays 100% unchanged:</strong>
+    <strong>Choose your AI engine below — each produces a different style:</strong>
     <div class="how-steps">
-      <span class="how-step">1 Upload your BG-removed PNG</span>
-      <span class="how-step">2 AI generates background scene only</span>
-      <span class="how-step">3 Your product composited on top in browser</span>
-      <span class="how-step">4 Download HD result</span>
+      <span class="how-step">FLUX Kontext — best product placement</span>
+      <span class="how-step">Kling Image — photorealistic scenes</span>
+      <span class="how-step">FLUX/Pollinations — fast & free</span>
     </div>
   </div>
 
@@ -225,6 +234,28 @@
     </div>
   </div>
 
+  <!-- AI Engine selector -->
+  <div id="scene-settings-engine" style="margin-bottom:1.2rem">
+    <label class="lbl">AI Engine</label>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px" id="engine-grid">
+      <div class="engine-card active" data-engine="kontext" onclick="selectEngine(this)">
+        <div class="engine-name">FLUX Kontext</div>
+        <div class="engine-desc">Best product placement — keeps your product unchanged, matches scene lighting</div>
+        <div class="engine-badge">Recommended</div>
+      </div>
+      <div class="engine-card" data-engine="kling" onclick="selectEngine(this)">
+        <div class="engine-name">Kling Image</div>
+        <div class="engine-desc">Photorealistic product scenes — Kling's image model, great quality</div>
+        <div class="engine-badge engine-badge-purple">Kling AI</div>
+      </div>
+      <div class="engine-card" data-engine="flux" onclick="selectEngine(this)">
+        <div class="engine-name">FLUX / Free</div>
+        <div class="engine-desc">Fast generation via HF FLUX + Pollinations fallback — always works</div>
+        <div class="engine-badge engine-badge-gray">Free</div>
+      </div>
+    </div>
+  </div>
+
   <!-- Generate -->
   <div id="no-backend-warn" class="warn-box" style="display:none">⚠ Backend not configured. <button onclick="showSetup()" style="background:none;border:none;color:inherit;font-weight:500;cursor:pointer;text-decoration:underline">Configure ↗</button></div>
   <button class="btn-gen" id="gen-btn" disabled onclick="generateScenes()">✦ Generate AI Scenes</button>
@@ -287,6 +318,7 @@ var selObjs     = new Set();
 var selTheme    = 'tropical beach with palm trees golden sand turquoise water';
 var selMood     = 'bright vibrant natural sunlight';
 var selPos      = 'center-bottom';
+var selEngine   = 'kontext';
 var STYLES      = [
   'photorealistic commercial product photography',
   'lifestyle brand photography editorial',
@@ -415,6 +447,21 @@ function setupChips(){
   });
 }
 
+function selectEngine(el){
+  /* Remove all active classes */
+  document.querySelectorAll('.engine-card').forEach(function(c){
+    c.classList.remove('active','active-kling','active-flux');
+  });
+  var engine = el.dataset.engine;
+  selEngine  = engine;
+  if(engine === 'kontext') el.classList.add('active');
+  else if(engine === 'kling') el.classList.add('active-kling');
+  else el.classList.add('active-flux');
+  /* Update button label */
+  var labels = { kontext: '✦ Generate with FLUX Kontext', kling: '✦ Generate with Kling AI', flux: '✦ Generate with FLUX' };
+  document.getElementById('gen-btn').textContent = labels[engine] || '✦ Generate AI Scenes';
+}
+
 function setupPosition(){
   document.getElementById('pos-row').addEventListener('click',function(e){
     var b=e.target.closest('.pos-btn'); if(!b) return;
@@ -450,42 +497,64 @@ async function generateScenes(){
   for(var i = 0; i < count; i++){
     bar.style.width  = Math.round((i/count)*100) + '%';
     sub.textContent  = 'Scene ' + (i+1) + ' of ' + count + '...';
-    titl.textContent = 'Step 1: Generating background scene ' + (i+1) + '...';
+    titl.textContent = 'Generating scene ' + (i+1) + ' of ' + count + ' using ' + { kontext: 'FLUX Kontext', kling: 'Kling AI', flux: 'FLUX' }[selEngine] + '...';
 
     try {
-      /* ── Step 1: Generate background ONLY (no product in prompt) ── */
-      var bgPrompt = 'Empty ' + theme + ', ' + selMood + ' lighting, ' + STYLES[i%STYLES.length] + '. No people, no bottles, no cans, no products. Just a beautiful background scene. Ultra detailed, 8K, photorealistic, Instagram worthy.';
-      if(objects) bgPrompt += ' Include: ' + objects + '.';
+      var imgUrl, src;
 
-      var resp = await fetch(BACKEND + '/edit-image', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({
-          /* No image sent — background only */
-          theme:  theme,
-          objects: objects,
-          mood:   selMood,
-          style:  STYLES[i%STYLES.length],
-          index:  i,
-          bg_only: true, /* flag for backend to know */
-          prompt_override: bgPrompt
-        })
-      });
+      /* ── Kling Image engine ── */
+      if(selEngine === 'kling'){
+        var klingPrompt = 'Professional commercial product photography: ' + (productB64 ? 'a probiotic fizzy beverage product' : '') + ' placed in ' + theme + (objects ? ' with ' + objects : '') + ', ' + selMood + ' lighting, ' + STYLES[i%STYLES.length] + ', ultra detailed, 8K, photorealistic, product hero shot, no text overlays, award winning photography';
+        var kResp = await fetch(BACKEND + '/kling-image', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: klingPrompt, aspect_ratio: '1:1', n: 1, index: i })
+        });
+        if(!kResp.ok) throw new Error('Kling error ' + kResp.status);
+        var kData  = await kResp.json();
+        var kImage = kData.images && kData.images[0];
+        if(!kImage) throw new Error('No image from Kling');
+        imgUrl = kImage.url;
+        src    = 'kling-image';
 
-      if(!resp.ok) throw new Error('Server error ' + resp.status);
-      var data   = await resp.json();
-      var bgUrl  = data.url || ('data:image/jpeg;base64,' + data.b64);
+        /* Canvas-composite product on Kling background if we have product PNG */
+        if(productImg && productB64){
+          titl.textContent = 'Compositing your product onto Kling scene...';
+          imgUrl = await compositeProductOnBackground(imgUrl, productImg, size, selPos);
+          src    = 'kling+composited';
+        }
 
-      /* ── Step 2: Composite product on top using Canvas ── */
-      titl.textContent = 'Step 2: Compositing your product...';
-
-      var compositeUrl = await compositeProductOnBackground(bgUrl, productImg, size, selPos);
+      /* ── FLUX Kontext engine (default) ── */
+      } else {
+        var resp = await fetch(BACKEND + '/edit-image', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({
+            image:   productB64,
+            theme:   theme,
+            objects: objects,
+            mood:    selMood,
+            style:   STYLES[i%STYLES.length],
+            index:   i
+          })
+        });
+        if(!resp.ok) throw new Error('Server error ' + resp.status);
+        var data = await resp.json();
+        imgUrl   = data.url || ('data:image/jpeg;base64,' + data.b64);
+        src      = data.source || 'generated';
+        /* Canvas-composite if Kontext wasn't used */
+        if(src !== 'kontext' && productImg){
+          titl.textContent = 'Compositing your product...';
+          imgUrl = await compositeProductOnBackground(imgUrl, productImg, size, selPos);
+          src    = 'composited';
+        }
+      }
 
       genImages.push({
-        url:   compositeUrl,
-        b64:   compositeUrl.split(',')[1],
-        desc:  STYLES[i%STYLES.length] + ' · ' + theme.split(' ').slice(0,3).join(' '),
-        index: i + 1
+        url:    imgUrl,
+        b64:    imgUrl.split(',')[1],
+        desc:   STYLES[i%STYLES.length] + ' · ' + theme.split(' ').slice(0,3).join(' '),
+        index:  i + 1,
+        source: src
       });
 
     } catch(err){
@@ -601,7 +670,10 @@ function renderResults(){
   document.getElementById('results-title').textContent = good.length + ' of ' + genImages.length + ' scenes generated';
   document.getElementById('results-grid').innerHTML = genImages.map(function(r, idx){
     if(r.error || !r.url) return '<div class="result-card"><div class="result-img-wrap" style="display:flex;align-items:center;justify-content:center;background:var(--red-light)"><span style="font-size:12px;color:var(--red-deep);padding:1rem;text-align:center">Scene '+r.index+' failed</span></div></div>';
-    return '<div class="result-card" id="rc-'+idx+'"><div class="result-img-wrap"><img src="'+r.url+'" loading="lazy"><span class="result-badge">Scene #'+r.index+'</span><span class="result-source">Composited ✓</span></div><div class="result-body"><div class="result-desc">'+r.desc+'</div><div class="result-btns"><button class="btn-dl" onclick="dlOne('+idx+')">⬇ Download PNG</button><button class="btn-eye" onclick="preview(\''+idx+'\')">⤢</button></div></div></div>';
+    var srcMap = {'kontext':'Kontext ✓','kling-image':'Kling AI ✓','kling+composited':'Kling ✓','composited':'Composited ✓','fal-flux':'HF FLUX ✓','pollinations':'Free ✓'};
+    var srcLabel = srcMap[r.source] || (r.source||'AI')+' ✓';
+    var srcColor = r.source && r.source.indexOf('kling')>-1 ? 'rgba(155,114,245,.85)' : 'rgba(29,158,117,.85)';
+    return '<div class="result-card" id="rc-'+idx+'"><div class="result-img-wrap"><img src="'+r.url+'" loading="lazy"><span class="result-badge">Scene #'+r.index+'</span><span class="result-source" style="background:'+srcColor+'">'+srcLabel+'</span></div><div class="result-body"><div class="result-desc">'+r.desc+'</div><div class="result-btns"><button class="btn-dl" onclick="dlOne('+idx+')">⬇ Download PNG</button><button class="btn-eye" onclick="preview(\''+idx+'\')">⤢</button></div></div></div>';
   }).join('');
   document.getElementById('results-area').style.display = 'block';
   document.getElementById('results-area').scrollIntoView({ behavior:'smooth', block:'start' });
