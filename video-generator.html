@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Video Generator — Probiotic Fizzy Beverages</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --green:#1D9E75;--green-dark:#0F6E56;--green-light:#E1F5EE;--green-mid:#5DCAA5;--green-deep:#085041;
+      --bg:#fff;--bg2:#f7f7f5;--bg3:#f0efea;--text:#1a1a18;--text2:#6b6a64;--text3:#9b9a94;
+      --border:rgba(0,0,0,.10);--border2:rgba(0,0,0,.18);
+      --purple-light:#F0EAFF;--purple-mid:#9B72F5;--purple-deep:#3D1A8A;
+      --amber-light:#FAEEDA;--amber-mid:#EF9F27;--amber-deep:#633806;
+      --red-light:#FCEBEB;--red-mid:#F09595;--red-deep:#791F1F;
+      --radius:8px;--radius-lg:12px;--font:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif
+    }
+    @media(prefers-color-scheme:dark){:root{
+      --bg:#1a1a18;--bg2:#242422;--bg3:#2e2e2c;--text:#e8e6de;--text2:#9b9a94;--text3:#6b6a64;
+      --border:rgba(255,255,255,.10);--border2:rgba(255,255,255,.18);
+      --green-light:#0a2e20;--green-deep:#9FE1CB;
+      --purple-light:#1a0f30;--purple-deep:#C4A8FF;
+      --amber-light:#2e1e04;--amber-deep:#FAC775;--red-light:#2e0a0a;--red-deep:#F7C1C1
+    }}
+    body{font-family:var(--font);background:var(--bg3);color:var(--text);min-height:100vh}
+    .app{max-width:860px;margin:0 auto;background:var(--bg);min-height:100vh;padding:1.5rem 1.25rem 4rem}
+    .top-bar{display:flex;align-items:center;gap:12px;margin-bottom:1.5rem}
+    .brand-dot{width:10px;height:10px;border-radius:50%;background:var(--purple-mid);flex-shrink:0}
+    .top-title{font-size:18px;font-weight:600;color:var(--text)}
+    .top-sub{font-size:13px;color:var(--text2);margin-top:2px}
+    .nav-pills{display:flex;gap:8px;margin-bottom:1.5rem;flex-wrap:wrap}
+    .nav-pill{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:500;border:.5px solid var(--border2);color:var(--text2);text-decoration:none;background:var(--bg);transition:.15s}
+    .nav-pill.active{background:var(--purple-light);border-color:var(--purple-mid);color:var(--purple-deep)}
+    .kling-badge{background:var(--purple-light);border:.5px solid var(--purple-mid);border-radius:var(--radius-lg);padding:12px 16px;margin-bottom:1.5rem;display:flex;align-items:center;gap:12px}
+    .kling-icon{font-size:24px}
+    .kling-title{font-size:14px;font-weight:500;color:var(--purple-deep)}
+    .kling-sub{font-size:12px;color:var(--text2);margin-top:2px;line-height:1.5}
+    .section{margin-bottom:1.4rem}
+    .lbl{display:block;font-size:12px;font-weight:600;color:var(--text2);letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px}
+    .mode-tabs{display:flex;border:.5px solid var(--border2);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:1.2rem}
+    .mode-tab{flex:1;padding:10px;font-size:13px;font-weight:500;text-align:center;background:var(--bg2);border:none;cursor:pointer;font-family:var(--font);color:var(--text2);transition:.15s;border-right:.5px solid var(--border2)}
+    .mode-tab:last-child{border-right:none}
+    .mode-tab.active{background:var(--purple-light);color:var(--purple-deep)}
+    .upload-zone{border:1.5px dashed var(--border2);border-radius:var(--radius-lg);padding:1.5rem;text-align:center;cursor:pointer;background:var(--bg2);transition:.15s}
+    .upload-zone:hover{border-color:var(--purple-mid);background:var(--purple-light)}
+    .upload-zone input{display:none}
+    .product-preview{display:flex;align-items:center;gap:12px;background:var(--bg2);border-radius:var(--radius-lg);padding:10px 12px;margin-top:10px}
+    .product-preview img{width:64px;height:64px;object-fit:contain;border-radius:var(--radius);background:repeating-conic-gradient(#ccc 0% 25%,#fff 0% 50%) 0 0/10px 10px;flex-shrink:0}
+    .pp-info{flex:1;font-size:13px;color:var(--text);font-weight:500}
+    .pp-sub{font-size:11px;color:var(--text2);margin-top:2px}
+    textarea{width:100%;padding:10px 12px;font-size:13px;font-family:var(--font);background:var(--bg);color:var(--text);border:.5px solid var(--border2);border-radius:var(--radius);outline:none;resize:vertical;line-height:1.6}
+    textarea:focus{border-color:var(--purple-mid);box-shadow:0 0 0 3px rgba(155,114,245,.12)}
+    .char-count{font-size:11px;color:var(--text3);text-align:right;margin-top:3px}
+    .chips-row{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:8px}
+    .chip{background:var(--bg2);border:.5px solid var(--border);border-radius:20px;padding:5px 12px;font-size:12px;color:var(--text2);cursor:pointer;user-select:none;transition:.12s}
+    .chip.active{background:var(--purple-light);border-color:var(--purple-mid);color:var(--purple-deep);font-weight:500}
+    .options-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1rem}
+    .opt-group label{display:block;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
+    .opt-group select{width:100%;padding:8px 10px;font-size:13px;font-family:var(--font);background:var(--bg);color:var(--text);border:.5px solid var(--border2);border-radius:var(--radius);outline:none}
+    .opt-group select:focus{border-color:var(--purple-mid)}
+    .btn-gen{width:100%;padding:14px;font-size:15px;font-weight:600;background:var(--purple-mid);color:#fff;border:none;border-radius:var(--radius-lg);cursor:pointer;font-family:var(--font);transition:.15s;margin-bottom:1.5rem}
+    .btn-gen:hover{background:var(--purple-deep)}
+    .btn-gen:disabled{background:var(--bg3);color:var(--text3);cursor:not-allowed}
+    /* Generation status */
+    .gen-status-card{background:var(--bg2);border-radius:var(--radius-lg);padding:1.5rem;text-align:center;border:.5px solid var(--border);margin-bottom:1.5rem}
+    .big-spinner{width:44px;height:44px;border:3px solid var(--border2);border-top-color:var(--purple-mid);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1rem}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .gen-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px}
+    .gen-sub{font-size:13px;color:var(--text2);margin-bottom:1rem}
+    .progress-steps{display:flex;justify-content:center;gap:6px;flex-wrap:wrap}
+    .prog-step{font-size:11px;padding:3px 10px;border-radius:20px;background:var(--bg3);color:var(--text3)}
+    .prog-step.active{background:var(--purple-light);color:var(--purple-deep);font-weight:500}
+    .prog-step.done{background:var(--green-light);color:var(--green-deep)}
+    /* Results */
+    .results-area{margin-top:1.5rem}
+    .results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+    .video-card{background:var(--bg);border:.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;transition:border-color .15s}
+    .video-card:hover{border-color:var(--purple-mid)}
+    .video-wrap{position:relative;aspect-ratio:9/16;background:#000;overflow:hidden}
+    .video-wrap.landscape{aspect-ratio:16/9}
+    .video-wrap.square{aspect-ratio:1}
+    .video-wrap video{width:100%;height:100%;object-fit:cover}
+    .video-cover{position:absolute;inset:0;background:#111;display:flex;align-items:center;justify-content:center;cursor:pointer}
+    .video-cover img{width:100%;height:100%;object-fit:cover;opacity:.7}
+    .play-btn{position:absolute;width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.9);display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer}
+    .video-badge{position:absolute;top:8px;left:8px;background:rgba(155,114,245,.9);color:#fff;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500}
+    .video-card-body{padding:10px 12px}
+    .video-card-desc{font-size:12px;color:var(--text2);margin-bottom:8px;line-height:1.5}
+    .video-card-actions{display:flex;gap:6px}
+    .btn-dl-video{flex:1;background:var(--purple-mid);color:#fff;border:none;border-radius:var(--radius);padding:7px;font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font)}
+    .btn-dl-video:hover{background:var(--purple-deep)}
+    .btn-eye{background:var(--bg2);color:var(--text2);border:.5px solid var(--border);border-radius:var(--radius);padding:7px 10px;font-size:12px;cursor:pointer}
+    .warn-box{background:var(--amber-light);border:.5px solid var(--amber-mid);border-radius:var(--radius);padding:10px 14px;font-size:13px;color:var(--amber-deep);margin-bottom:1rem;line-height:1.6}
+    .info-box{background:var(--purple-light);border:.5px solid var(--purple-mid);border-radius:var(--radius);padding:10px 14px;font-size:13px;color:var(--purple-deep);line-height:1.6;margin-bottom:1rem}
+    .prompt-suggestion{background:var(--bg2);border:.5px solid var(--border);border-radius:var(--radius);padding:8px 12px;font-size:12px;color:var(--text2);cursor:pointer;margin-bottom:6px;line-height:1.5;transition:.12s}
+    .prompt-suggestion:hover{border-color:var(--purple-mid);color:var(--text)}
+    .fs-overlay{position:fixed;inset:0;background:#000;z-index:200;display:flex;align-items:center;justify-content:center}
+    .fs-overlay video{max-width:100vw;max-height:100vh;object-fit:contain}
+    .fs-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.2);color:#fff;border:none;border-radius:50%;width:36px;height:36px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    @media(max-width:480px){.options-grid{grid-template-columns:1fr}.results-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <header class="top-bar">
+    <div class="brand-dot"></div>
+    <div>
+      <div class="top-title">AI Video Generator</div>
+      <div class="top-sub">Create Instagram Reels & product videos with Kling AI</div>
+    </div>
+  </header>
+
+  <nav class="nav-pills">
+    <a class="nav-pill" href="bg-remover.html">BG Remover</a>
+    <a class="nav-pill" href="ai-editor.html">AI Scene Editor</a>
+    <a class="nav-pill active" href="video-generator.html">Video Generator</a>
+    <a class="nav-pill" href="index.html">Content AI</a>
+  </nav>
+
+  <div class="kling-badge">
+    <div class="kling-icon">🎬</div>
+    <div>
+      <div class="kling-title">Powered by Kling AI</div>
+      <div class="kling-sub">Text-to-video or animate your product image into a cinematic reel. 5s–10s HD videos optimised for Instagram.</div>
+    </div>
+  </div>
+
+  <!-- Mode tabs -->
+  <div class="mode-tabs">
+    <button class="mode-tab active" onclick="setMode('t2v')">📝 Text to Video</button>
+    <button class="mode-tab" onclick="setMode('i2v')">🖼 Animate Product Image</button>
+  </div>
+
+  <!-- Image upload (i2v only) -->
+  <div id="i2v-upload" style="display:none" class="section">
+    <label class="lbl">Your product image</label>
+    <div class="upload-zone" id="drop-zone">
+      <input type="file" id="file-input" accept="image/*">
+      <div style="font-size:28px;opacity:.4;margin-bottom:8px">🖼</div>
+      <div style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:3px">Upload product image</div>
+      <div style="font-size:12px;color:var(--text2)">PNG with transparent background works best</div>
+    </div>
+    <div id="product-preview" style="display:none" class="product-preview">
+      <img id="product-thumb" src="" alt="Product">
+      <div>
+        <div class="pp-info" id="product-name">Product loaded</div>
+        <div class="pp-sub">✓ Ready to animate</div>
+      </div>
+      <button style="background:none;border:.5px solid var(--border2);border-radius:var(--radius);padding:4px 10px;font-size:11px;color:var(--text2);cursor:pointer" onclick="clearImage()">Change</button>
+    </div>
+  </div>
+
+  <!-- Prompt -->
+  <div class="section">
+    <label class="lbl">Video prompt <span style="color:var(--purple-mid)">*</span></label>
+
+    <!-- Quick suggestions -->
+    <div id="prompt-suggestions">
+      <div class="prompt-suggestion" onclick="usePrompt(this)">A probiotic fizzy beverage bottle on a tropical beach, waves gently lapping nearby, golden hour light, cinematic slow pan, photorealistic</div>
+      <div class="prompt-suggestion" onclick="usePrompt(this)">Close-up of a probiotic drink bottle, condensation forming on the glass, refreshing water splashes around it, bright studio lighting, dynamic motion</div>
+      <div class="prompt-suggestion" onclick="usePrompt(this)">A probiotic fizzy beverage rotating slowly in a modern kitchen, soft natural light, clean minimal aesthetic, product showcase style</div>
+      <div class="prompt-suggestion" onclick="usePrompt(this)">Probiotic beverage bottle in a wellness spa setting, candles flickering, plants in background, warm atmospheric lighting, cinematic mood</div>
+    </div>
+
+    <textarea id="prompt-input" rows="4" maxlength="2500" placeholder="Describe your video scene... Include: subject, action, scene, camera movement, lighting, style" oninput="updateCharCount()"></textarea>
+    <div class="char-count"><span id="char-count">0</span>/2500</div>
+  </div>
+
+  <!-- Camera & motion chips -->
+  <div class="section">
+    <label class="lbl" style="font-size:11px;text-transform:none">Camera movement</label>
+    <div class="chips-row" id="camera-chips">
+      <div class="chip active" data-val="">Auto</div>
+      <div class="chip" data-val="slow dolly-in toward subject">Dolly in</div>
+      <div class="chip" data-val="slow orbit around subject">Orbit</div>
+      <div class="chip" data-val="static tripod shot">Static</div>
+      <div class="chip" data-val="gentle handheld camera motion">Handheld</div>
+      <div class="chip" data-val="aerial drone shot pulling back">Drone</div>
+      <div class="chip" data-val="slow pan left to right">Pan</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <label class="lbl" style="font-size:11px;text-transform:none">Visual style</label>
+    <div class="chips-row" id="style-chips">
+      <div class="chip active" data-val="">Cinematic</div>
+      <div class="chip" data-val="premium commercial ad style">Commercial ad</div>
+      <div class="chip" data-val="lifestyle social media style">Lifestyle</div>
+      <div class="chip" data-val="editorial magazine style">Editorial</div>
+      <div class="chip" data-val="vibrant saturated colors">Vibrant</div>
+      <div class="chip" data-val="moody dark dramatic lighting">Moody</div>
+    </div>
+  </div>
+
+  <!-- Options -->
+  <div class="options-grid">
+    <div class="opt-group">
+      <label>Duration</label>
+      <select id="duration">
+        <option value="5" selected>5 seconds (cheaper)</option>
+        <option value="10">10 seconds</option>
+      </select>
+    </div>
+    <div class="opt-group">
+      <label>Aspect ratio</label>
+      <select id="aspect-ratio">
+        <option value="9:16" selected>9:16 — Instagram Reels / TikTok</option>
+        <option value="16:9">16:9 — Landscape / YouTube</option>
+        <option value="1:1">1:1 — Square / Feed</option>
+      </select>
+    </div>
+    <div class="opt-group">
+      <label>Quality mode</label>
+      <select id="mode">
+        <option value="std" selected>Standard (faster, cheaper)</option>
+        <option value="pro">Professional (better quality)</option>
+      </select>
+    </div>
+    <div class="opt-group">
+      <label>Variations</label>
+      <select id="variations">
+        <option value="1" selected>1 video</option>
+        <option value="2">2 videos</option>
+        <option value="3">3 videos</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Negative prompt -->
+  <div class="section">
+    <label class="lbl" style="font-size:11px;text-transform:none">Negative prompt (what to avoid)</label>
+    <textarea id="neg-prompt" rows="2" style="font-size:12px">text, watermark, logo, blurry, low quality, distorted faces, artifacts, flickering</textarea>
+  </div>
+
+  <!-- Generate button -->
+  <div id="warn-no-backend" class="warn-box" style="display:none">⚠ Backend not configured. <button onclick="showSetup()" style="background:none;border:none;color:inherit;font-weight:500;cursor:pointer;text-decoration:underline">Configure ↗</button></div>
+  <div id="warn-no-kling" class="warn-box" style="display:none">⚠ Kling API keys not set. Add <strong>KLING_ACCESS_KEY</strong> and <strong>KLING_SECRET_KEY</strong> in your Render environment variables. <a href="https://app.klingai.com/global/dev" target="_blank" style="color:inherit;font-weight:500">Get keys at klingai.com/dev ↗</a></div>
+  <button class="btn-gen" id="gen-btn" onclick="generateVideos()" disabled>🎬 Generate Video</button>
+
+  <!-- Generation status -->
+  <div id="gen-status" style="display:none">
+    <div class="gen-status-card">
+      <div class="big-spinner"></div>
+      <div class="gen-title" id="gen-title">Submitting to Kling AI...</div>
+      <div class="gen-sub" id="gen-sub">Video generation takes 1–3 minutes</div>
+      <div class="progress-steps">
+        <div class="prog-step active" id="pstep-1">Submitting task</div>
+        <div class="prog-step" id="pstep-2">Kling generating</div>
+        <div class="prog-step" id="pstep-3">Processing video</div>
+        <div class="prog-step" id="pstep-4">Ready!</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div id="results-area" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
+      <div style="font-size:15px;font-weight:600;color:var(--text)" id="results-title">Generated videos</div>
+      <button style="background:var(--purple-mid);color:#fff;border:none;border-radius:var(--radius);padding:7px 14px;font-size:12px;font-weight:500;cursor:pointer" onclick="generateVideos()">Generate more</button>
+    </div>
+    <div class="results-grid" id="results-grid"></div>
+  </div>
+
+  <!-- Setup FAB -->
+  <button onclick="showSetup()" style="position:fixed;bottom:24px;right:24px;width:44px;height:44px;border-radius:50%;background:var(--text);color:var(--bg);border:none;font-size:18px;cursor:pointer;z-index:90">⚙</button>
+
+  <!-- Setup Modal -->
+  <div id="setup-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:center;justify-content:center;padding:1rem">
+    <div style="background:var(--bg);border-radius:var(--radius-lg);padding:1.5rem;width:100%;max-width:500px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+        <div style="font-size:16px;font-weight:600;color:var(--text)">Setup</div>
+        <button onclick="hideSetup()" style="background:none;border:none;font-size:18px;color:var(--text2);cursor:pointer">✕</button>
+      </div>
+      <div class="lbl">Render Backend URL</div>
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <input type="text" id="backend-input" placeholder="https://your-app.onrender.com" style="flex:1;padding:9px 12px;font-size:13px;border:.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);font-family:var(--font);outline:none">
+        <button style="background:var(--green);color:#fff;border:none;border-radius:var(--radius);padding:8px 14px;font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font);white-space:nowrap" onclick="saveBackend()">Save</button>
+      </div>
+      <div id="backend-saved" style="font-size:12px;color:var(--green);display:none;margin-bottom:10px">✓ Saved!</div>
+      <div style="background:var(--purple-light);border:.5px solid var(--purple-mid);border-radius:var(--radius);padding:12px;font-size:12px;color:var(--purple-deep);line-height:1.8">
+        <strong>Required Render environment variables:</strong><br>
+        • <code>KLING_ACCESS_KEY</code> — from klingai.com/dev<br>
+        • <code>KLING_SECRET_KEY</code> — from klingai.com/dev<br><br>
+        <strong>How to get Kling keys:</strong><br>
+        1. Go to <a href="https://app.klingai.com/global/dev" target="_blank" style="color:inherit;font-weight:500">app.klingai.com/global/dev</a><br>
+        2. Sign up → Developer → API Keys<br>
+        3. Create key → copy AccessKey + SecretKey
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+var BACKEND     = localStorage.getItem('video_backend') || localStorage.getItem('ai_backend') || localStorage.getItem('bg_backend') || '';
+var mode        = 't2v';
+var productB64  = null;
+var productName = '';
+var selectedCam = '';
+var selectedStyle= '';
+var genResults  = [];
+var pollingIntervals = [];
+
+/* ── Init ── */
+document.addEventListener('DOMContentLoaded', function(){
+  checkSetup();
+  setupUpload();
+  setupChips();
+  if(BACKEND) document.getElementById('backend-input').value = BACKEND;
+  updateCharCount();
+});
+
+function checkSetup(){
+  var btn = document.getElementById('gen-btn');
+  document.getElementById('warn-no-backend').style.display = BACKEND ? 'none' : 'block';
+  if(BACKEND){
+    /* Check if Kling keys are configured */
+    fetch(BACKEND + '/').then(function(r){ return r.json(); }).then(function(d){
+      var hasKling = d.services && d.services.kling_keys;
+      document.getElementById('warn-no-kling').style.display = hasKling === false ? 'block' : 'none';
+      btn.disabled = false;
+    }).catch(function(){
+      btn.disabled = false;
+    });
+  }
+}
+
+/* ── Mode ── */
+function setMode(m){
+  mode = m;
+  var tabs = document.querySelectorAll('.mode-tab');
+  tabs[0].classList.toggle('active', m === 't2v');
+  tabs[1].classList.toggle('active', m === 'i2v');
+  document.getElementById('i2v-upload').style.display = m === 'i2v' ? 'block' : 'none';
+  document.getElementById('aspect-ratio').disabled = m === 'i2v';
+  /* Suggest different prompts for i2v */
+  updateSuggestions(m);
+}
+
+function updateSuggestions(m){
+  var sugs = document.getElementById('prompt-suggestions');
+  if(m === 'i2v'){
+    sugs.innerHTML = [
+      'Animate this product bottle, gentle rotation with sparkling fizz rising upward, droplets of condensation, cinematic lighting',
+      'The product comes alive with a subtle zoom-in, bokeh lights appearing in background, warm golden atmosphere, slow motion',
+      'Product bottle with liquid bubbling inside visible through glass, camera slowly orbiting, premium commercial look',
+      'Bring this product to life with a gentle sway and sparkle effect, outdoor natural light, lifestyle photography motion'
+    ].map(function(t){ return '<div class="prompt-suggestion" onclick="usePrompt(this)">'+t+'</div>'; }).join('');
+  } else {
+    sugs.innerHTML = [
+      'A probiotic fizzy beverage bottle on a tropical beach, waves gently lapping nearby, golden hour light, cinematic slow pan, photorealistic',
+      'Close-up of a probiotic drink bottle, condensation forming on the glass, refreshing water splashes around it, bright studio lighting, dynamic motion',
+      'A probiotic fizzy beverage rotating slowly in a modern kitchen, soft natural light, clean minimal aesthetic, product showcase style',
+      'Probiotic beverage bottle in a wellness spa setting, candles flickering, plants in background, warm atmospheric lighting, cinematic mood'
+    ].map(function(t){ return '<div class="prompt-suggestion" onclick="usePrompt(this)">'+t+'</div>'; }).join('');
+  }
+}
+
+function usePrompt(el){
+  document.getElementById('prompt-input').value = el.textContent;
+  updateCharCount();
+  document.getElementById('prompt-input').focus();
+}
+
+function updateCharCount(){
+  var len = document.getElementById('prompt-input').value.length;
+  document.getElementById('char-count').textContent = len;
+}
+
+/* ── Upload ── */
+function setupUpload(){
+  var dz = document.getElementById('drop-zone');
+  var fi = document.getElementById('file-input');
+  if(!dz || !fi) return;
+  dz.addEventListener('click',function(){ fi.click(); });
+  dz.addEventListener('dragover',function(e){ e.preventDefault(); dz.style.borderColor='var(--purple-mid)'; });
+  dz.addEventListener('dragleave',function(){ dz.style.borderColor=''; });
+  dz.addEventListener('drop',function(e){ e.preventDefault(); dz.style.borderColor=''; var f=e.dataTransfer.files[0]; if(f&&f.type.startsWith('image/')) handleFile(f); });
+  fi.addEventListener('change',function(e){ if(e.target.files[0]) handleFile(e.target.files[0]); e.target.value=''; });
+}
+
+function handleFile(file){
+  var r = new FileReader();
+  r.onload = function(ev){
+    productB64  = ev.target.result.split(',')[1];
+    productName = file.name.replace(/\.[^.]+$/,'');
+    document.getElementById('product-thumb').src = ev.target.result;
+    document.getElementById('product-name').textContent = file.name;
+    document.getElementById('product-preview').style.display = 'flex';
+    document.getElementById('drop-zone').style.display = 'none';
+  };
+  r.readAsDataURL(file);
+}
+
+function clearImage(){
+  productB64 = null; productName = '';
+  document.getElementById('product-preview').style.display = 'none';
+  document.getElementById('drop-zone').style.display = 'block';
+}
+
+/* ── Chips ── */
+function setupChips(){
+  document.getElementById('camera-chips').addEventListener('click',function(e){
+    var c=e.target.closest('.chip'); if(!c) return;
+    document.querySelectorAll('#camera-chips .chip').forEach(function(x){x.classList.remove('active');});
+    c.classList.add('active'); selectedCam = c.dataset.val;
+  });
+  document.getElementById('style-chips').addEventListener('click',function(e){
+    var c=e.target.closest('.chip'); if(!c) return;
+    document.querySelectorAll('#style-chips .chip').forEach(function(x){x.classList.remove('active');});
+    c.classList.add('active'); selectedStyle = c.dataset.val;
+  });
+}
+
+/* ── Generate ── */
+async function generateVideos(){
+  if(!BACKEND){ showSetup(); return; }
+
+  var basePrompt   = document.getElementById('prompt-input').value.trim();
+  if(!basePrompt){ document.getElementById('prompt-input').focus(); return; }
+
+  /* Build full prompt with camera + style additions */
+  var promptParts = [basePrompt];
+  if(selectedCam)   promptParts.push(selectedCam);
+  if(selectedStyle) promptParts.push(selectedStyle);
+  promptParts.push('high quality, ultra-realistic, no text overlays, no watermarks');
+  var fullPrompt = promptParts.join(', ');
+
+  var negPrompt   = document.getElementById('neg-prompt').value.trim();
+  var duration    = document.getElementById('duration').value;
+  var aspectRatio = document.getElementById('aspect-ratio').value;
+  var vidMode     = document.getElementById('mode').value;
+  var variations  = parseInt(document.getElementById('variations').value);
+
+  var btn = document.getElementById('gen-btn');
+  btn.disabled = true;
+  document.getElementById('gen-status').style.display = 'block';
+  document.getElementById('results-area').style.display = 'none';
+  setProgressStep(1);
+  genResults = [];
+
+  var taskIds = [];
+
+  /* Submit all tasks */
+  for(var i = 0; i < variations; i++){
+    try {
+      document.getElementById('gen-title').textContent = 'Submitting video ' + (i+1) + ' of ' + variations + '...';
+      var body = {
+        prompt:          fullPrompt,
+        negative_prompt: negPrompt,
+        duration,
+        mode:            vidMode,
+        aspect_ratio:    aspectRatio
+      };
+      if(mode === 'i2v' && productB64) body.image = productB64;
+
+      var resp = await fetch(BACKEND + '/kling-video', {
+        method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+      });
+
+      if(!resp.ok){
+        var err = await resp.json();
+        throw new Error(err.details || err.error || 'Submission failed');
+      }
+
+      var data = await resp.json();
+      taskIds.push({ task_id: data.task_id, index: i, prompt: fullPrompt, duration, aspectRatio });
+      genResults.push({ task_id: data.task_id, status: 'processing', index: i+1, prompt: fullPrompt, duration, aspectRatio });
+    } catch(err){
+      console.error('Submit failed:', err.message);
+      genResults.push({ error: err.message, status: 'failed', index: i+1 });
+    }
+  }
+
+  setProgressStep(2);
+  document.getElementById('gen-title').textContent = 'Kling AI is generating your videos...';
+  document.getElementById('gen-sub').textContent = 'This takes 1–3 minutes. Polling every 5 seconds...';
+
+  /* Poll all tasks in parallel */
+  await Promise.allSettled(taskIds.map(function(t){ return pollVideoTask(t); }));
+
+  setProgressStep(4);
+  document.getElementById('gen-title').textContent = 'Done!';
+  setTimeout(function(){
+    document.getElementById('gen-status').style.display = 'none';
+    renderResults();
+    btn.disabled = false;
+  }, 800);
+}
+
+async function pollVideoTask(taskInfo){
+  var maxAttempts = 60; /* 5s × 60 = 5 minutes max */
+  for(var attempt = 0; attempt < maxAttempts; attempt++){
+    await sleep(5000);
+    try {
+      var r    = await fetch(BACKEND + '/kling-video-status/' + taskInfo.task_id);
+      var data = await r.json();
+
+      document.getElementById('gen-sub').textContent = 'Task ' + taskInfo.task_id.slice(-8) + ': ' + (data.kling_status || data.status);
+      setProgressStep(data.status === 'processing' ? 2 : 3);
+
+      if(data.status === 'succeeded'){
+        /* Update result */
+        var idx = genResults.findIndex(function(r){ return r.task_id === taskInfo.task_id; });
+        if(idx >= 0){
+          genResults[idx].status    = 'succeeded';
+          genResults[idx].video_url = data.video_url;
+          genResults[idx].video_b64 = data.video_b64;
+          genResults[idx].cover_url = data.cover_url;
+        }
+        return;
+      }
+      if(data.status === 'failed'){
+        var idx2 = genResults.findIndex(function(r){ return r.task_id === taskInfo.task_id; });
+        if(idx2 >= 0) genResults[idx2].status = 'failed', genResults[idx2].error = data.error;
+        return;
+      }
+    } catch(e){ console.error('Poll error:', e.message); }
+  }
+  /* Timed out */
+  var idx3 = genResults.findIndex(function(r){ return r.task_id === taskInfo.task_id; });
+  if(idx3 >= 0) genResults[idx3].status = 'failed', genResults[idx3].error = 'Timed out after 5 minutes';
+}
+
+/* ── Render Results ── */
+function renderResults(){
+  var good = genResults.filter(function(r){ return r.status === 'succeeded'; });
+  document.getElementById('results-title').textContent = good.length + ' of ' + genResults.length + ' videos generated';
+  var ratioClass = '';
+  if(genResults[0]){
+    var ar = genResults[0].aspectRatio;
+    ratioClass = ar === '16:9' ? 'landscape' : ar === '1:1' ? 'square' : '';
+  }
+
+  document.getElementById('results-grid').innerHTML = genResults.map(function(r, idx){
+    if(r.error || r.status === 'failed'){
+      return '<div class="video-card"><div class="video-wrap" style="background:var(--red-light);display:flex;align-items:center;justify-content:center"><span style="font-size:12px;color:var(--red-deep);padding:1rem;text-align:center">'+( r.error || 'Generation failed')+'</span></div><div class="video-card-body"><div class="video-card-desc">Video '+r.index+' failed</div></div></div>';
+    }
+    if(r.status !== 'succeeded'){
+      return '<div class="video-card"><div class="video-wrap" style="display:flex;align-items:center;justify-content:center;background:var(--bg3)"><div style="text-align:center;font-size:12px;color:var(--text2)">Still generating...</div></div></div>';
+    }
+
+    var videoSrc  = r.video_b64 ? ('data:video/mp4;base64,' + r.video_b64) : r.video_url;
+    var coverSrc  = r.cover_url || '';
+
+    return '<div class="video-card" id="vc-'+idx+'">'
+      + '<div class="video-wrap '+ratioClass+'">'
+      + (coverSrc ? '<div class="video-cover" id="cover-'+idx+'" onclick="playVideo('+idx+',\''+videoSrc+'\')">'
+          + '<img src="'+coverSrc+'" alt="Cover">'
+          + '<div class="play-btn">▶</div>'
+          + '</div>' : '')
+      + '<video id="vid-'+idx+'" src="'+videoSrc+'" style="display:none" controls playsinline></video>'
+      + '<span class="video-badge">'+r.duration+'s • Kling AI</span>'
+      + '</div>'
+      + '<div class="video-card-body">'
+      + '<div class="video-card-desc">'+r.prompt.slice(0,80)+'...</div>'
+      + '<div class="video-card-actions">'
+      + '<button class="btn-dl-video" onclick="dlVideo('+idx+')">⬇ Download MP4</button>'
+      + '<button class="btn-eye" onclick="fullscreenVideo(\''+videoSrc+'\')">⤢</button>'
+      + '</div></div></div>';
+  }).join('');
+
+  document.getElementById('results-area').style.display = 'block';
+  document.getElementById('results-area').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ── Video playback ── */
+function playVideo(idx, src){
+  var cover = document.getElementById('cover-'+idx);
+  var vid   = document.getElementById('vid-'+idx);
+  if(cover) cover.style.display = 'none';
+  if(vid){ vid.style.display = 'block'; vid.play(); }
+}
+
+function fullscreenVideo(src){
+  var overlay = document.createElement('div');
+  overlay.className = 'fs-overlay';
+  overlay.innerHTML = '<video src="'+src+'" controls autoplay playsinline style="max-width:100vw;max-height:100vh;object-fit:contain"></video>'
+    + '<button class="fs-close" onclick="document.body.removeChild(this.parentNode)">✕</button>';
+  document.body.appendChild(overlay);
+}
+
+function dlVideo(idx){
+  var r = genResults[idx];
+  if(!r || r.status !== 'succeeded') return;
+  var a = document.createElement('a');
+  if(r.video_b64){
+    a.href     = 'data:video/mp4;base64,' + r.video_b64;
+    a.download = 'kling-video-' + r.index + '.mp4';
+  } else if(r.video_url){
+    a.href     = r.video_url;
+    a.download = 'kling-video-' + r.index + '.mp4';
+    a.target   = '_blank';
+  } else return;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+/* ── Progress steps ── */
+function setProgressStep(n){
+  for(var i=1; i<=4; i++){
+    var el = document.getElementById('pstep-'+i);
+    el.classList.remove('active','done');
+    if(i < n) el.classList.add('done');
+    else if(i === n) el.classList.add('active');
+  }
+}
+
+/* ── Setup ── */
+function showSetup(){ document.getElementById('setup-modal').style.display='flex'; }
+function hideSetup(){ document.getElementById('setup-modal').style.display='none'; }
+function saveBackend(){
+  BACKEND = document.getElementById('backend-input').value.trim().replace(/\/$/,'');
+  localStorage.setItem('video_backend', BACKEND);
+  document.getElementById('backend-saved').style.display = 'block';
+  setTimeout(function(){ document.getElementById('backend-saved').style.display='none'; }, 2000);
+  checkSetup(); hideSetup();
+}
+
+function sleep(ms){ return new Promise(function(r){ setTimeout(r,ms); }); }
+</script>
+</body>
+</html>
