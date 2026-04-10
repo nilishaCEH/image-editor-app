@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Background Remover — Probiotic Fizzy Beverages</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --green:#1D9E75;--green-dark:#0F6E56;--green-light:#E1F5EE;--green-mid:#5DCAA5;--green-deep:#085041;
+      --bg:#fff;--bg2:#f7f7f5;--bg3:#f0efea;--text:#1a1a18;--text2:#6b6a64;--text3:#9b9a94;
+      --border:rgba(0,0,0,.10);--border2:rgba(0,0,0,.18);
+      --amber-light:#FAEEDA;--amber-mid:#EF9F27;--amber-deep:#633806;
+      --red-light:#FCEBEB;--red-mid:#F09595;--red-deep:#791F1F;
+      --blue-light:#E6F1FB;--blue-mid:#85B7EB;--blue-deep:#0C447C;
+      --radius:8px;--radius-lg:12px;--font:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif
+    }
+    @media(prefers-color-scheme:dark){:root{
+      --bg:#1a1a18;--bg2:#242422;--bg3:#2e2e2c;--text:#e8e6de;--text2:#9b9a94;--text3:#6b6a64;
+      --border:rgba(255,255,255,.10);--border2:rgba(255,255,255,.18);
+      --green-light:#0a2e20;--green-deep:#9FE1CB;--amber-light:#2e1e04;--amber-deep:#FAC775;
+      --red-light:#2e0a0a;--red-deep:#F7C1C1;--blue-light:#0a1e2e;--blue-deep:#85B7EB
+    }}
+    body{font-family:var(--font);background:var(--bg3);color:var(--text);min-height:100vh}
+    .app{max-width:760px;margin:0 auto;background:var(--bg);min-height:100vh;padding:1.5rem 1.25rem 4rem}
+    .top-bar{display:flex;align-items:center;gap:12px;margin-bottom:1.5rem}
+    .brand-dot{width:10px;height:10px;border-radius:50%;background:var(--green);flex-shrink:0}
+    .top-title{font-size:18px;font-weight:600;color:var(--text)}
+    .top-sub{font-size:13px;color:var(--text2);margin-top:2px}
+    .nav-pills{display:flex;gap:8px;margin-bottom:1.5rem;flex-wrap:wrap}
+    .nav-pill{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:500;border:.5px solid var(--border2);color:var(--text2);text-decoration:none;background:var(--bg);transition:.15s}
+    .nav-pill:hover{border-color:var(--green-mid);color:var(--green-dark)}
+    .nav-pill.active{background:var(--green-light);border-color:var(--green-mid);color:var(--green-deep)}
+    .section{margin-bottom:1.5rem}
+    .lbl{display:block;font-size:12px;font-weight:600;color:var(--text2);letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px}
+    .upload-zone{border:1.5px dashed var(--border2);border-radius:var(--radius-lg);padding:2.5rem;text-align:center;cursor:pointer;background:var(--bg2);transition:.15s}
+    .upload-zone:hover{border-color:var(--green-mid);background:var(--green-light)}
+    .upload-zone input{display:none}
+    .uz-icon{font-size:32px;opacity:.4;margin-bottom:8px}
+    .uz-title{font-size:14px;font-weight:500;color:var(--text);margin-bottom:4px}
+    .uz-sub{font-size:12px;color:var(--text2)}
+    .preview-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+    .preview-card{border-radius:var(--radius-lg);overflow:hidden;border:.5px solid var(--border);background:var(--bg2)}
+    .preview-lbl{font-size:11px;font-weight:500;color:var(--text2);padding:8px 12px;text-transform:uppercase;letter-spacing:.05em;border-bottom:.5px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+    .preview-card img{width:100%;aspect-ratio:1;object-fit:contain;display:block;background:repeating-conic-gradient(#ccc 0% 25%,#fff 0% 50%) 0 0/16px 16px}
+    .processing{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;aspect-ratio:1;font-size:13px;color:var(--text2);padding:1rem;text-align:center}
+    .spinner{width:28px;height:28px;border:2.5px solid var(--border2);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
+    .prog-wrap{width:100%;background:var(--border);border-radius:20px;height:4px;overflow:hidden}
+    .prog-fill{height:100%;background:var(--green);border-radius:20px;width:0%;transition:width .3s}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .drive-section{background:var(--blue-light);border:.5px solid var(--blue-mid);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1rem}
+    .drive-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+    .drive-icon{width:28px;height:28px;flex-shrink:0}
+    .drive-title{font-size:14px;font-weight:500;color:var(--blue-deep)}
+    .drive-sub{font-size:12px;color:var(--text2);margin-top:2px}
+    .btn-drive-connect{background:#4285f4;color:#fff;border:none;border-radius:var(--radius);padding:8px 16px;font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:6px}
+    .btn-drive-connect:hover{background:#3367d6}
+    .drive-connected{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--green-deep)}
+    .drive-folder-row{display:flex;gap:8px;align-items:center;margin-top:8px}
+    .drive-folder-row input{flex:1;padding:7px 10px;font-size:13px;border:.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);font-family:var(--font);outline:none}
+    .drive-folder-row input:focus{border-color:var(--green)}
+    .btn-green{background:var(--green);color:#fff;border:none;border-radius:var(--radius);padding:8px 14px;font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font);white-space:nowrap;transition:.15s}
+    .btn-green:hover{background:var(--green-dark)}
+    .btn-green:disabled{background:var(--bg3);color:var(--text3);cursor:not-allowed}
+    .btn-ghost{background:transparent;border:.5px solid var(--border2);border-radius:var(--radius);padding:7px 14px;font-size:13px;color:var(--text2);cursor:pointer;font-family:var(--font)}
+    .action-row{display:flex;gap:10px;flex-wrap:wrap}
+    .btn-process{flex:1;padding:13px;font-size:15px;font-weight:600;background:var(--green);color:#fff;border:none;border-radius:var(--radius-lg);cursor:pointer;font-family:var(--font);transition:.15s}
+    .btn-process:hover{background:var(--green-dark)}
+    .btn-process:disabled{background:var(--bg3);color:var(--text3);cursor:not-allowed}
+    .result-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .btn-dl{background:var(--green);color:#fff;border:none;border-radius:var(--radius);padding:8px 16px;font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font)}
+    .btn-dl:hover{background:var(--green-dark)}
+    .btn-dl-drive{background:#4285f4;color:#fff;border:none;border-radius:var(--radius);padding:8px 16px;font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:6px}
+    .btn-dl-drive:hover{background:#3367d6}
+    .btn-dl-drive:disabled{background:var(--bg3);color:var(--text3);cursor:not-allowed}
+    .warn-box{background:var(--amber-light);border:.5px solid var(--amber-mid);border-radius:var(--radius);padding:10px 14px;font-size:13px;color:var(--amber-deep);margin-bottom:1rem;line-height:1.6}
+    .info-box{background:var(--green-light);border:.5px solid var(--green-mid);border-radius:var(--radius);padding:10px 14px;font-size:13px;color:var(--green-deep);margin-bottom:1rem;line-height:1.6}
+    .err-box{background:var(--red-light);border:.5px solid var(--red-mid);border-radius:var(--radius);padding:10px 14px;font-size:13px;color:var(--red-deep);margin-bottom:1rem;line-height:1.6}
+    .saved-msg{font-size:12px;color:var(--green);margin-top:4px}
+    .quality-row{display:flex;gap:8px;margin-bottom:1rem}
+    .q-chip{background:var(--bg);border:.5px solid var(--border);border-radius:var(--radius);padding:7px 14px;font-size:12px;color:var(--text2);cursor:pointer;transition:.12s;user-select:none}
+    .q-chip.active{border:1.5px solid var(--green);background:var(--green-light);color:var(--green-deep);font-weight:500}
+    .batch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-top:10px}
+    .batch-card{border-radius:var(--radius);overflow:hidden;border:.5px solid var(--border);background:var(--bg2);position:relative}
+    .batch-card img{width:100%;aspect-ratio:1;object-fit:contain;display:block;background:repeating-conic-gradient(#ccc 0% 25%,#fff 0% 50%) 0 0/16px 16px}
+    .batch-badge{position:absolute;top:4px;left:4px;background:rgba(0,0,0,.6);color:#fff;font-size:10px;padding:2px 6px;border-radius:20px}
+    .batch-status{padding:6px 8px;font-size:11px;color:var(--text2);text-align:center;border-top:.5px solid var(--border)}
+    @media(max-width:480px){.preview-grid{grid-template-columns:1fr}.action-row{flex-direction:column}}
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <header class="top-bar">
+    <div class="brand-dot"></div>
+    <div>
+      <div class="top-title">Background Remover</div>
+      <div class="top-sub">Remove backgrounds & save to Google Drive in HD</div>
+    </div>
+  </header>
+
+  <nav class="nav-pills">
+    <a class="nav-pill active" href="bg-remover.html">BG Remover</a>
+    <a class="nav-pill" href="ai-editor.html">AI Scene Editor</a>
+    <a class="nav-pill" href="index.html">Content AI</a>
+  </nav>
+
+  <!-- Google Drive Section -->
+  <div class="drive-section" id="drive-section">
+    <div class="drive-header">
+      <svg class="drive-icon" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg">
+        <path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/>
+        <path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z" fill="#00ac47"/>
+        <path d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.502l5.852 11.5z" fill="#ea4335"/>
+        <path d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d"/>
+        <path d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc"/>
+        <path d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 27h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/>
+      </svg>
+      <div>
+        <div class="drive-title">Google Drive</div>
+        <div class="drive-sub" id="drive-sub">Connect to save removed backgrounds directly to Drive</div>
+      </div>
+    </div>
+    <div id="drive-connect-area">
+      <button class="btn-drive-connect" onclick="connectDrive()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+        Connect Google Drive
+      </button>
+    </div>
+    <div id="drive-connected-area" style="display:none">
+      <div class="drive-connected">
+        <span style="color:var(--green);font-size:16px">✓</span>
+        <span id="drive-user-name">Connected</span>
+        <button class="btn-ghost" style="font-size:11px;padding:3px 8px;margin-left:4px" onclick="disconnectDrive()">Disconnect</button>
+      </div>
+      <div class="drive-folder-row">
+        <input type="text" id="drive-folder-name" value="Probiotic Beverages — BG Removed" placeholder="Google Drive folder name...">
+        <button class="btn-green" onclick="saveFolderPref()">Save</button>
+      </div>
+      <div id="folder-saved-msg" class="saved-msg" style="display:none">✓ Folder preference saved</div>
+    </div>
+  </div>
+
+  <!-- Upload -->
+  <div class="section">
+    <label class="lbl">Upload product images</label>
+    <div class="upload-zone" id="drop-zone">
+      <input type="file" id="file-input" accept="image/*" multiple>
+      <div class="uz-icon">&#8679;</div>
+      <div class="uz-title">Click to upload or drag & drop</div>
+      <div class="uz-sub">JPG · PNG · WEBP · Multiple files supported</div>
+    </div>
+  </div>
+
+  <!-- Quality -->
+  <div class="section">
+    <label class="lbl">Output quality</label>
+    <div class="quality-row">
+      <div class="q-chip active" data-q="auto">Auto (best)</div>
+      <div class="q-chip" data-q="medium">Medium (faster)</div>
+      <div class="q-chip" data-q="preview">Preview (fastest)</div>
+    </div>
+  </div>
+
+  <!-- Queue -->
+  <div class="section" id="queue-section" style="display:none">
+    <label class="lbl">Processing queue</label>
+    <div class="batch-grid" id="batch-grid"></div>
+  </div>
+
+  <!-- Single preview -->
+  <div id="preview-section" style="display:none">
+    <div class="section">
+      <div class="preview-grid">
+        <div class="preview-card">
+          <div class="preview-lbl">Original</div>
+          <img id="orig-img" src="" alt="Original">
+        </div>
+        <div class="preview-card">
+          <div class="preview-lbl">
+            <span>Background removed</span>
+            <span id="hd-badge" style="display:none;background:var(--green-light);color:var(--green-deep);font-size:10px;padding:1px 6px;border-radius:20px">HD</span>
+          </div>
+          <div id="processing-div" class="processing">
+            <div class="spinner"></div>
+            <span id="processing-status">Removing background...</span>
+            <div class="prog-wrap"><div class="prog-fill" id="processing-prog"></div></div>
+          </div>
+          <img id="result-img" src="" alt="Background removed" style="display:none">
+        </div>
+      </div>
+      <div class="result-actions" id="result-actions" style="display:none">
+        <button class="btn-dl" onclick="downloadResult()">⬇ Download HD PNG</button>
+        <button class="btn-dl-drive" id="btn-save-drive" onclick="saveToDrive()" disabled>
+          <svg width="14" height="14" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg"><path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="white"/><path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z" fill="white"/><path d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.502l5.852 11.5z" fill="white"/><path d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z" fill="white"/><path d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="white"/><path d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 27h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="white"/></svg>
+          Save to Drive
+        </button>
+        <button class="btn-ghost" onclick="resetTool()">Process another</button>
+      </div>
+      <div id="drive-save-status" style="margin-top:8px;font-size:13px"></div>
+    </div>
+  </div>
+
+  <!-- Process button -->
+  <div id="process-btn-area">
+    <div id="no-backend-warn" class="warn-box" style="display:none">
+      ⚠ Backend URL not set. <a href="#" onclick="showSetup();return false;" style="color:inherit;font-weight:500">Configure backend ↗</a>
+    </div>
+    <button class="btn-process" id="process-btn" disabled onclick="processImages()">Remove Background</button>
+  </div>
+
+  <!-- Setup FAB -->
+  <button onclick="showSetup()" style="position:fixed;bottom:24px;right:24px;width:44px;height:44px;border-radius:50%;background:var(--text);color:var(--bg);border:none;font-size:18px;cursor:pointer;z-index:90" title="Setup">⚙</button>
+
+  <!-- Setup Modal -->
+  <div id="setup-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:none;align-items:center;justify-content:center;padding:1rem">
+    <div style="background:var(--bg);border-radius:var(--radius-lg);padding:1.5rem;width:100%;max-width:480px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+        <div style="font-size:16px;font-weight:600;color:var(--text)">Backend Setup</div>
+        <button onclick="hideSetup()" style="background:none;border:none;font-size:18px;color:var(--text2);cursor:pointer">✕</button>
+      </div>
+      <label class="lbl">Render Backend URL</label>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <input type="text" id="backend-input" placeholder="https://your-app.onrender.com" style="flex:1;padding:9px 12px;font-size:13px;border:.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);font-family:var(--font);outline:none">
+        <button class="btn-green" onclick="saveBackend()">Save</button>
+      </div>
+      <div id="backend-saved" class="saved-msg" style="display:none">✓ Saved!</div>
+      <div style="font-size:12px;color:var(--text2);margin-top:8px;padding:10px;background:var(--bg2);border-radius:var(--radius);line-height:1.6">
+        Same Render backend as your Instagram Content AI app.<br>
+        Requires: <strong>REMOVEBG_API_KEY</strong> environment variable.
+      </div>
+    </div>
+  </div>
+
+</div>
+<script>
+/* ── Config ── */
+var BACKEND     = localStorage.getItem('bg_backend') || '';
+var DRIVE_TOKEN = localStorage.getItem('drive_token') || '';
+var DRIVE_USER  = localStorage.getItem('drive_user')  || '';
+var FOLDER_NAME = localStorage.getItem('drive_folder')|| 'Probiotic Beverages — BG Removed';
+var GDRIVE_CLIENT_ID = localStorage.getItem('gdrive_client_id') || '';
+
+/* ── State ── */
+var files      = [];
+var resultB64  = null;
+var resultName = 'bg-removed';
+var selQuality = 'auto';
+var processingQueue = [];
+
+/* ── Init ── */
+document.addEventListener('DOMContentLoaded', function(){
+  setupUpload();
+  setupQuality();
+  checkBackend();
+  restoreDriveSession();
+  document.getElementById('drive-folder-name').value = FOLDER_NAME;
+  if(BACKEND) document.getElementById('backend-input').value = BACKEND;
+});
+
+function checkBackend(){
+  var btn = document.getElementById('process-btn');
+  var warn = document.getElementById('no-backend-warn');
+  if(!BACKEND){ warn.style.display='block'; btn.disabled=true; }
+  else { warn.style.display='none'; }
+}
+
+/* ── Upload ── */
+function setupUpload(){
+  var dz=document.getElementById('drop-zone'), fi=document.getElementById('file-input');
+  dz.addEventListener('click',function(){ fi.click(); });
+  dz.addEventListener('dragover',function(e){ e.preventDefault(); dz.style.borderColor='var(--green-mid)'; });
+  dz.addEventListener('dragleave',function(){ dz.style.borderColor=''; });
+  dz.addEventListener('drop',function(e){ e.preventDefault(); dz.style.borderColor=''; handleFiles(Array.from(e.dataTransfer.files).filter(function(f){return f.type.startsWith('image/');})); });
+  fi.addEventListener('change',function(e){ handleFiles(Array.from(e.target.files)); e.target.value=''; });
+}
+
+function handleFiles(newFiles){
+  files = newFiles;
+  if(!files.length) return;
+  document.getElementById('process-btn').disabled = !BACKEND;
+  document.getElementById('process-btn').textContent = files.length > 1 ? 'Remove Backgrounds (' + files.length + ' images)' : 'Remove Background';
+
+  if(files.length === 1){
+    document.getElementById('queue-section').style.display = 'none';
+    var reader = new FileReader();
+    reader.onload = function(ev){ document.getElementById('orig-img').src = ev.target.result; };
+    reader.readAsDataURL(files[0]);
+    document.getElementById('preview-section').style.display = 'block';
+    document.getElementById('processing-div').style.display = 'flex';
+    document.getElementById('result-img').style.display = 'none';
+    document.getElementById('result-actions').style.display = 'none';
+  } else {
+    document.getElementById('preview-section').style.display = 'none';
+    renderBatchGrid();
+    document.getElementById('queue-section').style.display = 'block';
+  }
+}
+
+function renderBatchGrid(){
+  var grid = document.getElementById('batch-grid');
+  grid.innerHTML = files.map(function(f, i){
+    var url = URL.createObjectURL(f);
+    return '<div class="batch-card" id="batch-'+i+'">'
+      + '<img src="'+url+'" alt="'+f.name+'">'
+      + '<div class="batch-badge">'+(i+1)+'</div>'
+      + '<div class="batch-status" id="batch-status-'+i+'">Queued</div>'
+      + '</div>';
+  }).join('');
+}
+
+/* ── Quality chips ── */
+function setupQuality(){
+  document.querySelectorAll('.q-chip').forEach(function(c){
+    c.addEventListener('click',function(){
+      document.querySelectorAll('.q-chip').forEach(function(x){x.classList.remove('active');});
+      c.classList.add('active'); selQuality = c.dataset.q;
+    });
+  });
+}
+
+/* ── Process ── */
+async function processImages(){
+  if(!BACKEND || !files.length) return;
+  var btn = document.getElementById('process-btn');
+  btn.disabled = true;
+
+  if(files.length === 1){
+    await processSingle(files[0]);
+  } else {
+    await processBatch();
+  }
+  btn.disabled = false;
+}
+
+async function processSingle(file){
+  var statusEl  = document.getElementById('processing-status');
+  var progEl    = document.getElementById('processing-prog');
+  var divEl     = document.getElementById('processing-div');
+  var imgEl     = document.getElementById('result-img');
+  var actionsEl = document.getElementById('result-actions');
+
+  divEl.style.display = 'flex';
+  imgEl.style.display = 'none';
+  actionsEl.style.display = 'none';
+  statusEl.textContent = 'Uploading image...';
+  progEl.style.width = '20%';
+
+  try {
+    var b64 = await fileToB64(file);
+    statusEl.textContent = 'Removing background...';
+    progEl.style.width = '50%';
+
+    var resp = await fetch(BACKEND + '/remove-bg', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ image: b64.split(',')[1], mtype: file.type || 'image/png', quality: selQuality })
+    });
+
+    if(!resp.ok) throw new Error('Server error ' + resp.status);
+    var data = await resp.json();
+    progEl.style.width = '100%';
+
+    if(data.removed){
+      resultB64  = data.image;
+      resultName = file.name.replace(/\.[^.]+$/,'') + '-bg-removed';
+      statusEl.textContent = '✓ Background removed!';
+      imgEl.src = 'data:image/png;base64,' + data.image;
+      imgEl.style.display = 'block';
+      divEl.style.display = 'none';
+      document.getElementById('hd-badge').style.display = 'inline';
+      actionsEl.style.display = 'flex';
+      document.getElementById('btn-save-drive').disabled = !DRIVE_TOKEN;
+
+      /* Auto-save to Drive if connected */
+      if(DRIVE_TOKEN){
+        setTimeout(function(){ saveToDrive(); }, 500);
+      }
+    } else {
+      throw new Error(data.reason || 'Background removal failed');
+    }
+  } catch(err){
+    statusEl.textContent = '✗ Error: ' + err.message;
+    progEl.style.width = '0%';
+  }
+}
+
+async function processBatch(){
+  var total = files.length;
+  for(var i = 0; i < total; i++){
+    var statusEl = document.getElementById('batch-status-' + i);
+    var card     = document.getElementById('batch-' + i);
+    if(statusEl) statusEl.textContent = 'Processing...';
+    if(card) card.style.borderColor = 'var(--green-mid)';
+    try {
+      var b64  = await fileToB64(files[i]);
+      var resp = await fetch(BACKEND + '/remove-bg', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ image: b64.split(',')[1], mtype: files[i].type || 'image/png', quality: selQuality })
+      });
+      if(!resp.ok) throw new Error('Server error ' + resp.status);
+      var data = await resp.json();
+
+      if(data.removed){
+        /* Show result in batch card */
+        var img = card.querySelector('img');
+        if(img) img.src = 'data:image/png;base64,' + data.image;
+        if(statusEl) statusEl.textContent = '✓ Done';
+        if(card) card.style.borderColor = 'var(--green)';
+
+        /* Auto-save each to Drive if connected */
+        if(DRIVE_TOKEN){
+          var fname = files[i].name.replace(/\.[^.]+$/, '') + '-bg-removed.png';
+          await uploadToDrive(data.image, fname);
+        }
+
+        /* Also trigger download */
+        var a = document.createElement('a');
+        a.href = 'data:image/png;base64,' + data.image;
+        a.download = files[i].name.replace(/\.[^.]+$/, '') + '-bg-removed.png';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        await sleep(300);
+      } else {
+        throw new Error(data.reason || 'Failed');
+      }
+    } catch(err){
+      if(statusEl) statusEl.textContent = '✗ ' + err.message.slice(0, 30);
+      if(card) card.style.borderColor = 'var(--red-mid)';
+    }
+  }
+}
+
+/* ── Download ── */
+function downloadResult(){
+  if(!resultB64) return;
+  var a = document.createElement('a');
+  a.href = 'data:image/png;base64,' + resultB64;
+  a.download = resultName + '.png';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+/* ── Google Drive ── */
+function connectDrive(){
+  var clientId = localStorage.getItem('gdrive_client_id');
+  if(!clientId){
+    clientId = prompt('Enter your Google Drive OAuth Client ID:\n\n(Get one free at console.cloud.google.com → APIs & Services → Credentials → OAuth 2.0 Client ID)');
+    if(!clientId) return;
+    localStorage.setItem('gdrive_client_id', clientId);
+  }
+  var redirectUri = window.location.href.split('?')[0];
+  var scope       = 'https://www.googleapis.com/auth/drive.file';
+  var url = 'https://accounts.google.com/o/oauth2/v2/auth?client_id=' + clientId + '&redirect_uri=' + encodeURIComponent(redirectUri) + '&response_type=token&scope=' + encodeURIComponent(scope) + '&prompt=consent';
+  window.location.href = url;
+}
+
+function restoreDriveSession(){
+  /* Check if returning from OAuth redirect */
+  var hash = window.location.hash;
+  if(hash.includes('access_token')){
+    var params = new URLSearchParams(hash.substring(1));
+    DRIVE_TOKEN = params.get('access_token');
+    localStorage.setItem('drive_token', DRIVE_TOKEN);
+    window.history.replaceState(null, '', window.location.pathname);
+    /* Get user info */
+    fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+      headers: { 'Authorization': 'Bearer ' + DRIVE_TOKEN }
+    }).then(function(r){ return r.json(); }).then(function(d){
+      DRIVE_USER = d.email || d.name || 'Connected';
+      localStorage.setItem('drive_user', DRIVE_USER);
+      showDriveConnected();
+    }).catch(function(){ showDriveConnected(); });
+  } else if(DRIVE_TOKEN){
+    showDriveConnected();
+  }
+}
+
+function showDriveConnected(){
+  document.getElementById('drive-connect-area').style.display = 'none';
+  document.getElementById('drive-connected-area').style.display = 'block';
+  document.getElementById('drive-sub').textContent = 'Connected — backgrounds saved automatically';
+  document.getElementById('drive-user-name').textContent = DRIVE_USER || 'Connected';
+  document.getElementById('btn-save-drive').disabled = false;
+}
+
+function disconnectDrive(){
+  DRIVE_TOKEN = ''; DRIVE_USER = '';
+  localStorage.removeItem('drive_token'); localStorage.removeItem('drive_user');
+  document.getElementById('drive-connect-area').style.display = 'block';
+  document.getElementById('drive-connected-area').style.display = 'none';
+  document.getElementById('drive-sub').textContent = 'Connect to save removed backgrounds directly to Drive';
+  document.getElementById('btn-save-drive').disabled = true;
+}
+
+function saveFolderPref(){
+  FOLDER_NAME = document.getElementById('drive-folder-name').value.trim() || 'Probiotic Beverages — BG Removed';
+  localStorage.setItem('drive_folder', FOLDER_NAME);
+  var msg = document.getElementById('folder-saved-msg');
+  msg.style.display = 'block';
+  setTimeout(function(){ msg.style.display='none'; }, 2000);
+}
+
+async function saveToDrive(){
+  if(!DRIVE_TOKEN || !resultB64) return;
+  var btn    = document.getElementById('btn-save-drive');
+  var status = document.getElementById('drive-save-status');
+  btn.textContent = '⏳ Saving...'; btn.disabled = true;
+  status.textContent = '';
+  try {
+    await uploadToDrive(resultB64, resultName + '.png');
+    status.innerHTML = '<span style="color:var(--green)">✓ Saved to Google Drive → ' + FOLDER_NAME + '</span>';
+  } catch(err){
+    status.innerHTML = '<span style="color:var(--red-deep)">✗ Drive save failed: ' + err.message + '</span>';
+    if(err.message.includes('401')) disconnectDrive();
+  }
+  btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 87.3 78"><path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="white"/><path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z" fill="white"/><path d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="white"/><path d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 27h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="white"/></svg> Save to Drive';
+  btn.disabled = false;
+}
+
+async function uploadToDrive(b64, filename){
+  /* Step 1: Find or create folder */
+  var folderId = await getOrCreateFolder(FOLDER_NAME);
+
+  /* Step 2: Upload file as multipart */
+  var boundary = '-------314159265358979323846';
+  var delimiter = '\r\n--' + boundary + '\r\n';
+  var closeDelim = '\r\n--' + boundary + '--';
+  var metadata  = JSON.stringify({ name: filename, parents: [folderId] });
+  var body = delimiter + 'Content-Type: application/json\r\n\r\n' + metadata + delimiter + 'Content-Type: image/png\r\nContent-Transfer-Encoding: base64\r\n\r\n' + b64 + closeDelim;
+
+  var r = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + DRIVE_TOKEN, 'Content-Type': 'multipart/related; boundary="' + boundary + '"' },
+    body: body
+  });
+  if(!r.ok) { var e = await r.text(); throw new Error(r.status + ': ' + e.slice(0,100)); }
+  return await r.json();
+}
+
+async function getOrCreateFolder(name){
+  /* Search for existing folder */
+  var q    = encodeURIComponent("name='" + name + "' and mimeType='application/vnd.google-apps.folder' and trashed=false");
+  var r    = await fetch('https://www.googleapis.com/drive/v3/files?q=' + q + '&fields=files(id,name)', {
+    headers: { 'Authorization': 'Bearer ' + DRIVE_TOKEN }
+  });
+  var data = await r.json();
+  if(data.files && data.files.length > 0) return data.files[0].id;
+
+  /* Create folder */
+  var cr = await fetch('https://www.googleapis.com/drive/v3/files', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + DRIVE_TOKEN, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, mimeType: 'application/vnd.google-apps.folder' })
+  });
+  var cd = await cr.json();
+  return cd.id;
+}
+
+/* ── Reset ── */
+function resetTool(){
+  files = []; resultB64 = null;
+  document.getElementById('preview-section').style.display = 'none';
+  document.getElementById('queue-section').style.display = 'none';
+  document.getElementById('process-btn').disabled = true;
+  document.getElementById('process-btn').textContent = 'Remove Background';
+  document.getElementById('processing-div').style.display = 'flex';
+  document.getElementById('result-img').style.display = 'none';
+  document.getElementById('result-actions').style.display = 'none';
+  document.getElementById('drive-save-status').textContent = '';
+  document.getElementById('processing-prog').style.width = '0%';
+}
+
+/* ── Setup ── */
+function showSetup(){ document.getElementById('setup-modal').style.display='flex'; }
+function hideSetup(){ document.getElementById('setup-modal').style.display='none'; }
+function saveBackend(){
+  BACKEND = document.getElementById('backend-input').value.trim().replace(/\/$/,'');
+  localStorage.setItem('bg_backend', BACKEND);
+  document.getElementById('backend-saved').style.display = 'block';
+  setTimeout(function(){ document.getElementById('backend-saved').style.display='none'; }, 2000);
+  checkBackend(); hideSetup();
+}
+
+/* ── Helpers ── */
+function fileToB64(file){ return new Promise(function(res,rej){ var r=new FileReader(); r.onload=function(e){res(e.target.result);}; r.onerror=rej; r.readAsDataURL(file); }); }
+function sleep(ms){ return new Promise(function(r){ setTimeout(r,ms); }); }
+</script>
+</body>
+</html>

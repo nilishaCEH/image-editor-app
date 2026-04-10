@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Scene Editor — Probiotic Fizzy Beverages</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --green:#1D9E75;--green-dark:#0F6E56;--green-light:#E1F5EE;--green-mid:#5DCAA5;--green-deep:#085041;
+      --bg:#fff;--bg2:#f7f7f5;--bg3:#f0efea;--text:#1a1a18;--text2:#6b6a64;--text3:#9b9a94;
+      --border:rgba(0,0,0,.10);--border2:rgba(0,0,0,.18);
+      --amber-light:#FAEEDA;--amber-mid:#EF9F27;--amber-deep:#633806;
+      --red-light:#FCEBEB;--red-mid:#F09595;--red-deep:#791F1F;
+      --blue-light:#E6F1FB;--blue-mid:#85B7EB;--blue-deep:#0C447C;
+      --radius:8px;--radius-lg:12px;--font:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif
+    }
+    @media(prefers-color-scheme:dark){:root{
+      --bg:#1a1a18;--bg2:#242422;--bg3:#2e2e2c;--text:#e8e6de;--text2:#9b9a94;--text3:#6b6a64;
+      --border:rgba(255,255,255,.10);--border2:rgba(255,255,255,.18);
+      --green-light:#0a2e20;--green-deep:#9FE1CB;--amber-light:#2e1e04;--amber-deep:#FAC775;
+      --red-light:#2e0a0a;--red-deep:#F7C1C1;--blue-light:#0a1e2e;--blue-deep:#85B7EB
+    }}
+    body{font-family:var(--font);background:var(--bg3);color:var(--text);min-height:100vh}
+    .app{max-width:900px;margin:0 auto;background:var(--bg);min-height:100vh;padding:1.5rem 1.25rem 4rem}
+    .top-bar{display:flex;align-items:center;gap:12px;margin-bottom:1.5rem}
+    .brand-dot{width:10px;height:10px;border-radius:50%;background:var(--green);flex-shrink:0}
+    .top-title{font-size:18px;font-weight:600;color:var(--text)}
+    .top-sub{font-size:13px;color:var(--text2);margin-top:2px}
+    .nav-pills{display:flex;gap:8px;margin-bottom:1.5rem;flex-wrap:wrap}
+    .nav-pill{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:500;border:.5px solid var(--border2);color:var(--text2);text-decoration:none;background:var(--bg);transition:.15s}
+    .nav-pill:hover{border-color:var(--green-mid);color:var(--green-dark)}
+    .nav-pill.active{background:var(--green-light);border-color:var(--green-mid);color:var(--green-deep)}
+    .section{margin-bottom:1.4rem}
+    .lbl{display:block;font-size:12px;font-weight:600;color:var(--text2);letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px}
+    /* Source tabs */
+    .source-tabs{display:flex;border-bottom:.5px solid var(--border);margin-bottom:1rem}
+    .src-tab{padding:8px 16px;font-size:13px;font-weight:500;color:var(--text2);background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-1px;cursor:pointer;font-family:var(--font)}
+    .src-tab.active{color:var(--green-dark);border-bottom-color:var(--green)}
+    .src-panel{display:none}.src-panel.active{display:block}
+    /* Upload zone */
+    .upload-zone{border:1.5px dashed var(--border2);border-radius:var(--radius-lg);padding:2rem;text-align:center;cursor:pointer;background:var(--bg2);transition:.15s}
+    .upload-zone:hover{border-color:var(--green-mid);background:var(--green-light)}
+    .upload-zone input{display:none}
+    .uz-icon{font-size:28px;opacity:.4;margin-bottom:8px}
+    .uz-title{font-size:14px;font-weight:500;color:var(--text);margin-bottom:3px}
+    .uz-sub{font-size:12px;color:var(--text2)}
+    /* Drive panel */
+    .drive-panel{background:var(--blue-light);border:.5px solid var(--blue-mid);border-radius:var(--radius-lg);padding:1rem}
+    .drive-panel-hdr{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+    .drive-icon{width:24px;height:24px;flex-shrink:0}
+    .drive-panel-title{font-size:14px;font-weight:500;color:var(--blue-deep)}
+    .btn-drive{background:#4285f4;color:#fff;border:none;border-radius:var(--radius);padding:8px 14px;font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font)}
+    .btn-drive:hover{background:#3367d6}
+    .drive-file-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;margin-top:10px;max-height:280px;overflow-y:auto}
+    .drive-file{border-radius:var(--radius);overflow:hidden;cursor:pointer;border:2px solid transparent;background:var(--bg);transition:.15s}
+    .drive-file:hover{border-color:var(--green-mid)}
+    .drive-file.selected{border-color:var(--green)}
+    .drive-file img{width:100%;aspect-ratio:1;object-fit:cover;display:block}
+    .drive-file .df-name{font-size:10px;color:var(--text2);padding:3px 5px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap}
+    /* Selected product */
+    .product-preview{display:flex;align-items:center;gap:12px;background:var(--bg2);border-radius:var(--radius-lg);padding:12px;margin-bottom:1rem}
+    .product-preview img{width:80px;height:80px;object-fit:contain;border-radius:var(--radius);background:repeating-conic-gradient(#ccc 0% 25%,#fff 0% 50%) 0 0/12px 12px}
+    .product-info{flex:1}
+    .product-name{font-size:14px;font-weight:500;color:var(--text);margin-bottom:2px}
+    .product-status{font-size:12px;color:var(--green-dark)}
+    /* Options */
+    .theme-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:7px}
+    .theme-chip{background:var(--bg);border:.5px solid var(--border);border-radius:var(--radius);padding:7px 10px;font-size:12px;color:var(--text2);cursor:pointer;user-select:none;text-align:center;transition:.12s}
+    .theme-chip.active{border:1.5px solid var(--green);background:var(--green-light);color:var(--green-deep);font-weight:500}
+    .chips-row{display:flex;flex-wrap:wrap;gap:7px}
+    .chip{background:var(--bg2);border:.5px solid var(--border);border-radius:20px;padding:5px 12px;font-size:12px;color:var(--text2);cursor:pointer;user-select:none;transition:.12s}
+    .chip.active{background:var(--green-light);border-color:var(--green-mid);color:var(--green-deep);font-weight:500}
+    input[type=text]{width:100%;padding:9px 12px;font-size:13px;font-family:var(--font);background:var(--bg);color:var(--text);border:.5px solid var(--border2);border-radius:var(--radius);outline:none;margin-top:8px}
+    input[type=text]:focus{border-color:var(--green)}
+    input[type=range]{width:100%;accent-color:var(--green)}
+    .count-row{display:flex;align-items:center;gap:12px}
+    .count-val{font-size:14px;font-weight:600;color:var(--green-dark);min-width:80px;text-align:right}
+    /* Generate btn */
+    .btn-gen{width:100%;padding:14px;font-size:15px;font-weight:600;background:var(--green);color:#fff;border:none;border-radius:var(--radius-lg);cursor:pointer;font-family:var(--font);transition:.15s;margin-bottom:1.5rem}
+    .btn-gen:hover{background:var(--green-dark)}
+    .btn-gen:disabled{background:var(--bg3);color:var(--text3);cursor:not-allowed}
+    /* Loading */
+    .loading-card{background:var(--bg2);border-radius:var(--radius-lg);padding:2rem;text-align:center;border:.5px solid var(--border)}
+    .big-spinner{width:40px;height:40px;border:3px solid var(--border2);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1rem}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .loading-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:5px}
+    .loading-sub{font-size:13px;color:var(--text2);margin-bottom:1rem}
+    .bar-wrap{background:var(--bg3);border-radius:20px;height:5px;overflow:hidden}
+    .bar-fill{height:100%;background:var(--green);border-radius:20px;width:0%;transition:width .4s}
+    /* Results */
+    .results-hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:1rem}
+    .results-title{font-size:15px;font-weight:600;color:var(--text)}
+    .results-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .btn-zip{background:var(--green);color:#fff;border:none;border-radius:var(--radius);padding:7px 14px;font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font)}
+    .btn-drive-save-all{background:#4285f4;color:#fff;border:none;border-radius:var(--radius);padding:7px 14px;font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font)}
+    .results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+    .result-card{background:var(--bg);border:.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;transition:border-color .15s}
+    .result-card:hover{border-color:var(--green-mid)}
+    .result-img-wrap{position:relative;aspect-ratio:1;background:var(--bg2);overflow:hidden}
+    .result-img-wrap img{width:100%;height:100%;object-fit:cover;display:block}
+    .result-badge{position:absolute;top:7px;left:7px;background:rgba(0,0,0,.55);color:#fff;font-size:10px;padding:2px 7px;border-radius:20px}
+    .result-body{padding:10px 12px}
+    .result-desc{font-size:11px;color:var(--text2);margin-bottom:8px;line-height:1.5}
+    .result-btns{display:flex;gap:6px}
+    .btn-dl{flex:1;background:var(--green);color:#fff;border:none;border-radius:var(--radius);padding:6px;font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font)}
+    .btn-dl:hover{background:var(--green-dark)}
+    .btn-dl-drive-sm{background:#4285f4;color:#fff;border:none;border-radius:var(--radius);padding:6px 8px;font-size:12px;cursor:pointer;font-family:var(--font)}
+    .btn-eye{background:var(--bg2);color:var(--text2);border:.5px solid var(--border);border-radius:var(--radius);padding:6px 8px;font-size:12px;cursor:pointer}
+    .warn-box{background:var(--amber-light);border:.5px solid var(--amber-mid);border-radius:var(--radius);padding:10px 14px;font-size:13px;color:var(--amber-deep);margin-bottom:1rem;line-height:1.6}
+    .info-box{background:var(--green-light);border:.5px solid var(--green-mid);border-radius:var(--radius);padding:10px 14px;font-size:13px;color:var(--green-deep);margin-bottom:1rem;line-height:1.6}
+    .fs-overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:200;display:flex;align-items:center;justify-content:center;cursor:pointer}
+    .fs-overlay img{max-width:90vw;max-height:90vh;object-fit:contain;border-radius:var(--radius)}
+    @media(max-width:480px){.theme-grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr))}.results-grid{grid-template-columns:1fr 1fr}}
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <header class="top-bar">
+    <div class="brand-dot"></div>
+    <div>
+      <div class="top-title">AI Scene Editor</div>
+      <div class="top-sub">Place your product exactly as-is into new AI-generated scenes</div>
+    </div>
+  </header>
+
+  <nav class="nav-pills">
+    <a class="nav-pill" href="bg-remover.html">BG Remover</a>
+    <a class="nav-pill active" href="ai-editor.html">AI Scene Editor</a>
+    <a class="nav-pill" href="index.html">Content AI</a>
+  </nav>
+
+  <!-- STEP 1: Product source -->
+  <div class="section">
+    <label class="lbl">Step 1 — Select your product image</label>
+    <div class="source-tabs">
+      <button class="src-tab active" onclick="switchSource('upload')">Upload from device</button>
+      <button class="src-tab" onclick="switchSource('drive')">From Google Drive</button>
+      <button class="src-tab" onclick="switchSource('library')">From BG Remover output</button>
+    </div>
+
+    <!-- Upload tab -->
+    <div class="src-panel active" id="src-upload">
+      <div class="upload-zone" id="drop-zone">
+        <input type="file" id="file-input" accept="image/*">
+        <div class="uz-icon">&#8679;</div>
+        <div class="uz-title">Upload background-removed product image</div>
+        <div class="uz-sub">PNG with transparent background recommended</div>
+      </div>
+    </div>
+
+    <!-- Drive tab -->
+    <div class="src-panel" id="src-drive">
+      <div class="drive-panel">
+        <div class="drive-panel-hdr">
+          <svg class="drive-icon" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg">
+            <path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/>
+            <path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z" fill="#00ac47"/>
+            <path d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.502l5.852 11.5z" fill="#ea4335"/>
+            <path d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d"/>
+            <path d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc"/>
+            <path d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 27h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/>
+          </svg>
+          <div class="drive-panel-title">Browse your Google Drive</div>
+        </div>
+        <div id="drive-not-connected">
+          <button class="btn-drive" onclick="connectDrive()">Connect Google Drive</button>
+        </div>
+        <div id="drive-is-connected" style="display:none">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button class="btn-drive" onclick="loadDriveFiles()">Browse Drive files</button>
+            <input type="text" id="drive-search" placeholder="Search filename..." style="flex:1;padding:7px 10px;font-size:12px;border:.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);font-family:var(--font);outline:none;margin-top:0">
+            <button class="btn-drive" onclick="searchDriveFiles()">Search</button>
+          </div>
+          <div class="drive-file-grid" id="drive-file-grid" style="margin-top:10px">
+            <div style="font-size:12px;color:var(--text2);grid-column:1/-1">Click "Browse Drive files" to load your images</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Library tab -->
+    <div class="src-panel" id="src-library">
+      <div class="info-box">Images processed by the <strong>BG Remover</strong> tool are automatically available here. Use the BG Remover first to create transparent-background product images, then come back here to generate scenes.</div>
+      <div class="drive-file-grid" id="library-grid">
+        <div style="font-size:12px;color:var(--text2);grid-column:1/-1">No images in library yet. Use the BG Remover tool first.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Selected product preview -->
+  <div id="product-preview-area" style="display:none">
+    <div class="product-preview">
+      <img id="product-img" src="" alt="Product">
+      <div class="product-info">
+        <div class="product-name" id="product-name">Product image selected</div>
+        <div class="product-status">✓ Ready for scene generation</div>
+      </div>
+      <button class="chip" onclick="clearProduct()">Change</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: Scene settings -->
+  <div class="section" id="scene-settings" style="opacity:.4;pointer-events:none">
+    <label class="lbl">Step 2 — Choose your scene</label>
+
+    <div class="section">
+      <label class="lbl" style="text-transform:none;font-size:11px">Background theme</label>
+      <div class="theme-grid" id="theme-grid">
+        <div class="theme-chip active" data-theme="tropical beach with palm trees and golden sand, product untouched">🏖 Tropical beach</div>
+        <div class="theme-chip" data-theme="lush green forest with sunlight rays, product untouched">🌿 Forest</div>
+        <div class="theme-chip" data-theme="modern minimalist white kitchen counter, product untouched">🍽 Kitchen</div>
+        <div class="theme-chip" data-theme="vibrant gym and fitness studio, product untouched">💪 Gym</div>
+        <div class="theme-chip" data-theme="cozy wellness spa with candles and plants, product untouched">🧘 Wellness spa</div>
+        <div class="theme-chip" data-theme="mountain hiking trail at sunrise, product untouched">🏔 Mountains</div>
+        <div class="theme-chip" data-theme="rooftop bar at sunset with city skyline, product untouched">🌆 Rooftop bar</div>
+        <div class="theme-chip" data-theme="fresh fruit market with colorful produce, product untouched">🍊 Fruit market</div>
+        <div class="theme-chip" data-theme="studio gradient background with bokeh lights, product untouched">✨ Studio</div>
+        <div class="theme-chip" data-theme="swimming pool on a sunny summer day, product untouched">🏊 Pool</div>
+      </div>
+      <input type="text" id="custom-theme" placeholder="Or describe your own scene...">
+    </div>
+
+    <div class="section">
+      <label class="lbl" style="text-transform:none;font-size:11px">Add objects (optional)</label>
+      <div class="chips-row" id="obj-row">
+        <div class="chip" data-obj="fresh mint leaves and ice cubes">🍃 Mint & ice</div>
+        <div class="chip" data-obj="sliced citrus fruits">🍋 Citrus</div>
+        <div class="chip" data-obj="fizzy bubbles and water splashes">💧 Bubbles</div>
+        <div class="chip" data-obj="tropical flowers">🌺 Flowers</div>
+        <div class="chip" data-obj="glass with ice">🥤 Glass</div>
+        <div class="chip" data-obj="green plants and leaves">🌱 Plants</div>
+      </div>
+      <input type="text" id="custom-obj" placeholder="Or add custom objects...">
+    </div>
+
+    <div class="section">
+      <label class="lbl" style="text-transform:none;font-size:11px">Lighting & mood</label>
+      <div class="chips-row" id="mood-row">
+        <div class="chip active" data-mood="bright natural sunlight">☀ Bright</div>
+        <div class="chip" data-mood="warm golden hour">🌅 Golden</div>
+        <div class="chip" data-mood="cool refreshing blue tones">❄ Cool</div>
+        <div class="chip" data-mood="dramatic studio lighting">🎭 Dramatic</div>
+        <div class="chip" data-mood="soft diffused natural light">🌤 Soft</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <label class="lbl" style="text-transform:none;font-size:11px">Number of variations</label>
+      <div class="count-row">
+        <input type="range" id="var-count" min="2" max="10" value="6" step="2" oninput="document.getElementById('count-val').textContent=this.value+' images'">
+        <span class="count-val" id="count-val">6 images</span>
+      </div>
+    </div>
+
+    <!-- Save to Drive toggle -->
+    <div style="background:var(--blue-light);border:.5px solid var(--blue-mid);border-radius:var(--radius);padding:10px 14px;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <div style="font-size:13px;color:var(--blue-deep);font-weight:500">Auto-save results to Google Drive</div>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text2)">
+        <input type="checkbox" id="auto-save-drive" style="accent-color:var(--green);width:16px;height:16px">
+        Save each result to Drive
+      </label>
+    </div>
+  </div>
+
+  <!-- Generate button -->
+  <div id="gen-area">
+    <div id="no-backend-warn" class="warn-box" style="display:none">⚠ Backend not configured. <a href="#" onclick="showSetup();return false;" style="color:inherit;font-weight:500">Configure ↗</a></div>
+    <button class="btn-gen" id="gen-btn" disabled onclick="generateScenes()">✦ Generate AI Scenes</button>
+  </div>
+
+  <!-- Loading -->
+  <div id="loading-area" style="display:none">
+    <div class="loading-card">
+      <div class="big-spinner"></div>
+      <div class="loading-title">Generating your scenes...</div>
+      <div class="loading-sub" id="loading-sub">Starting...</div>
+      <div class="bar-wrap"><div class="bar-fill" id="gen-bar"></div></div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div id="results-area" style="display:none">
+    <div class="results-hdr">
+      <div class="results-title" id="results-title">Generated scenes</div>
+      <div class="results-actions">
+        <button class="btn-zip" onclick="downloadAllZip()">⬇ Download ZIP</button>
+        <button class="btn-drive-save-all" id="btn-save-all-drive" onclick="saveAllToDrive()">Save all to Drive</button>
+      </div>
+    </div>
+    <div class="results-grid" id="results-grid"></div>
+  </div>
+
+  <!-- Setup FAB -->
+  <button onclick="showSetup()" style="position:fixed;bottom:24px;right:24px;width:44px;height:44px;border-radius:50%;background:var(--text);color:var(--bg);border:none;font-size:18px;cursor:pointer;z-index:90">⚙</button>
+
+  <!-- Setup Modal -->
+  <div id="setup-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:center;justify-content:center;padding:1rem">
+    <div style="background:var(--bg);border-radius:var(--radius-lg);padding:1.5rem;width:100%;max-width:480px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+        <div style="font-size:16px;font-weight:600;color:var(--text)">Setup</div>
+        <button onclick="hideSetup()" style="background:none;border:none;font-size:18px;color:var(--text2);cursor:pointer">✕</button>
+      </div>
+      <label class="lbl">Render Backend URL</label>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <input type="text" id="backend-input" placeholder="https://your-app.onrender.com" style="flex:1;padding:9px 12px;font-size:13px;border:.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);font-family:var(--font);outline:none;margin-top:0">
+        <button style="background:var(--green);color:#fff;border:none;border-radius:var(--radius);padding:8px 14px;font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font)" onclick="saveBackend()">Save</button>
+      </div>
+      <div id="backend-saved" style="font-size:12px;color:var(--green);display:none">✓ Saved!</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ── Config ── */
+var BACKEND     = localStorage.getItem('ai_backend') || localStorage.getItem('bg_backend') || '';
+var DRIVE_TOKEN = localStorage.getItem('drive_token') || '';
+var genImages   = [];
+var productB64  = null;
+var productName = '';
+var selObjs     = new Set();
+var selTheme    = 'tropical beach with palm trees and golden sand, product untouched';
+var selMood     = 'bright natural sunlight';
+var STYLES      = ['photorealistic product photography','lifestyle brand photography','editorial magazine style','vibrant social media style','clean commercial photography','artistic product shot','dynamic action shot','flat lay overhead view','close-up detail shot','wide environmental shot'];
+
+/* ── Init ── */
+document.addEventListener('DOMContentLoaded', function(){
+  setupUpload(); setupChips(); checkSetup();
+  restoreDriveSession();
+  if(BACKEND) document.getElementById('backend-input').value = BACKEND;
+  loadLibraryImages();
+});
+
+function checkSetup(){
+  var warn = document.getElementById('no-backend-warn');
+  warn.style.display = BACKEND ? 'none' : 'block';
+}
+
+/* ── Source tabs ── */
+function switchSource(tab){
+  document.querySelectorAll('.src-tab').forEach(function(t,i){ t.classList.remove('active'); });
+  document.querySelectorAll('.src-panel').forEach(function(p){ p.classList.remove('active'); });
+  var tabs   = document.querySelectorAll('.src-tab');
+  var panels = document.querySelectorAll('.src-panel');
+  var idx    = ['upload','drive','library'].indexOf(tab);
+  if(tabs[idx])   tabs[idx].classList.add('active');
+  if(panels[idx]) panels[idx].classList.add('active');
+  if(tab === 'library') loadLibraryImages();
+  if(tab === 'drive' && DRIVE_TOKEN) { document.getElementById('drive-not-connected').style.display='none'; document.getElementById('drive-is-connected').style.display='block'; }
+}
+
+/* ── Upload ── */
+function setupUpload(){
+  var dz = document.getElementById('drop-zone');
+  var fi = document.getElementById('file-input');
+  dz.addEventListener('click',function(){ fi.click(); });
+  dz.addEventListener('dragover',function(e){ e.preventDefault(); dz.style.borderColor='var(--green-mid)'; });
+  dz.addEventListener('dragleave',function(){ dz.style.borderColor=''; });
+  dz.addEventListener('drop',function(e){ e.preventDefault(); dz.style.borderColor=''; var f=e.dataTransfer.files[0]; if(f&&f.type.startsWith('image/')) loadFile(f); });
+  fi.addEventListener('change',function(e){ if(e.target.files[0]) loadFile(e.target.files[0]); e.target.value=''; });
+}
+
+function loadFile(file){
+  var r = new FileReader();
+  r.onload = function(ev){
+    productB64  = ev.target.result.split(',')[1];
+    productName = file.name.replace(/\.[^.]+$/,'');
+    showProductPreview(ev.target.result, file.name);
+    /* Save to library */
+    saveToLibrary(ev.target.result, file.name);
+  };
+  r.readAsDataURL(file);
+}
+
+function showProductPreview(src, name){
+  document.getElementById('product-img').src = src;
+  document.getElementById('product-name').textContent = name;
+  document.getElementById('product-preview-area').style.display = 'block';
+  document.getElementById('scene-settings').style.opacity = '1';
+  document.getElementById('scene-settings').style.pointerEvents = 'auto';
+  document.getElementById('gen-btn').disabled = !BACKEND;
+}
+
+function clearProduct(){
+  productB64 = null; productName = '';
+  document.getElementById('product-preview-area').style.display = 'none';
+  document.getElementById('scene-settings').style.opacity = '.4';
+  document.getElementById('scene-settings').style.pointerEvents = 'none';
+  document.getElementById('gen-btn').disabled = true;
+}
+
+/* ── Library ── */
+function saveToLibrary(dataUrl, name){
+  var lib = JSON.parse(localStorage.getItem('bg_library') || '[]');
+  /* Remove duplicate */
+  lib = lib.filter(function(i){ return i.name !== name; });
+  lib.unshift({ name, src: dataUrl, ts: Date.now() });
+  /* Keep last 20 */
+  if(lib.length > 20) lib = lib.slice(0,20);
+  try { localStorage.setItem('bg_library', JSON.stringify(lib)); } catch(e){ console.warn('Library storage full'); }
+}
+
+function loadLibraryImages(){
+  var lib  = JSON.parse(localStorage.getItem('bg_library') || '[]');
+  var grid = document.getElementById('library-grid');
+  if(!lib.length){ grid.innerHTML='<div style="font-size:12px;color:var(--text2);grid-column:1/-1">No images yet. Use the BG Remover tool first.</div>'; return; }
+  grid.innerHTML = lib.map(function(item, i){
+    return '<div class="drive-file" onclick="selectLibraryImage('+i+')" id="lib-file-'+i+'">'
+      + '<img src="'+item.src+'" alt="'+item.name+'">'
+      + '<div class="df-name">'+item.name+'</div>'
+      + '</div>';
+  }).join('');
+}
+
+function selectLibraryImage(i){
+  var lib = JSON.parse(localStorage.getItem('bg_library') || '[]');
+  var item = lib[i];
+  if(!item) return;
+  document.querySelectorAll('.drive-file').forEach(function(el){ el.classList.remove('selected'); });
+  document.getElementById('lib-file-'+i)?.classList.add('selected');
+  productB64  = item.src.split(',')[1];
+  productName = item.name;
+  showProductPreview(item.src, item.name);
+}
+
+/* ── Chips ── */
+function setupChips(){
+  document.getElementById('theme-grid').addEventListener('click',function(e){
+    var c=e.target.closest('.theme-chip'); if(!c) return;
+    document.querySelectorAll('.theme-chip').forEach(function(x){x.classList.remove('active');});
+    c.classList.add('active'); selTheme=c.dataset.theme;
+    document.getElementById('custom-theme').value='';
+  });
+  document.getElementById('custom-theme').addEventListener('input',function(){
+    if(this.value.trim()){ document.querySelectorAll('.theme-chip').forEach(function(x){x.classList.remove('active');}); selTheme=this.value.trim()+', keep the product image exactly as uploaded without any changes'; }
+  });
+  document.getElementById('obj-row').addEventListener('click',function(e){
+    var c=e.target.closest('.chip[data-obj]'); if(!c) return;
+    c.classList.toggle('active');
+    if(c.classList.contains('active')) selObjs.add(c.dataset.obj); else selObjs.delete(c.dataset.obj);
+  });
+  document.getElementById('mood-row').addEventListener('click',function(e){
+    var c=e.target.closest('.chip[data-mood]'); if(!c) return;
+    document.querySelectorAll('.chip[data-mood]').forEach(function(x){x.classList.remove('active');});
+    c.classList.add('active'); selMood=c.dataset.mood;
+  });
+}
+
+/* ── Google Drive ── */
+function connectDrive(){
+  var clientId = localStorage.getItem('gdrive_client_id');
+  if(!clientId){
+    clientId = prompt('Enter your Google Drive OAuth Client ID:\n\n(Get one free at console.cloud.google.com → APIs & Services → Credentials)');
+    if(!clientId) return;
+    localStorage.setItem('gdrive_client_id', clientId);
+  }
+  var redirectUri = window.location.href.split('?')[0].split('#')[0];
+  var url = 'https://accounts.google.com/o/oauth2/v2/auth?client_id=' + clientId + '&redirect_uri=' + encodeURIComponent(redirectUri) + '&response_type=token&scope=' + encodeURIComponent('https://www.googleapis.com/auth/drive.file') + '&prompt=consent';
+  window.location.href = url;
+}
+
+function restoreDriveSession(){
+  var hash = window.location.hash;
+  if(hash.includes('access_token')){
+    var params = new URLSearchParams(hash.substring(1));
+    DRIVE_TOKEN = params.get('access_token');
+    localStorage.setItem('drive_token', DRIVE_TOKEN);
+    window.history.replaceState(null, '', window.location.pathname);
+  }
+  if(DRIVE_TOKEN){
+    document.getElementById('drive-not-connected').style.display = 'none';
+    document.getElementById('drive-is-connected').style.display  = 'block';
+    document.getElementById('auto-save-drive').checked = true;
+    document.getElementById('btn-save-all-drive').style.display = 'inline';
+  } else {
+    document.getElementById('btn-save-all-drive').style.display = 'none';
+  }
+}
+
+async function loadDriveFiles(){
+  if(!DRIVE_TOKEN) return;
+  var grid = document.getElementById('drive-file-grid');
+  grid.innerHTML = '<div style="font-size:12px;color:var(--text2);grid-column:1/-1">Loading...</div>';
+  try {
+    var q   = encodeURIComponent("mimeType contains 'image/' and trashed=false");
+    var r   = await fetch('https://www.googleapis.com/drive/v3/files?q='+q+'&fields=files(id,name,thumbnailLink,mimeType)&pageSize=50&orderBy=modifiedTime+desc', {
+      headers: { 'Authorization': 'Bearer ' + DRIVE_TOKEN }
+    });
+    var data = await r.json();
+    if(!data.files || !data.files.length){ grid.innerHTML='<div style="font-size:12px;color:var(--text2);grid-column:1/-1">No images found in Drive</div>'; return; }
+    renderDriveFiles(data.files);
+  } catch(err){ grid.innerHTML='<div style="font-size:12px;color:var(--red-deep);grid-column:1/-1">Error: '+err.message+'</div>'; }
+}
+
+async function searchDriveFiles(){
+  if(!DRIVE_TOKEN) return;
+  var query  = document.getElementById('drive-search').value.trim();
+  var grid   = document.getElementById('drive-file-grid');
+  grid.innerHTML = '<div style="font-size:12px;color:var(--text2);grid-column:1/-1">Searching...</div>';
+  try {
+    var q = encodeURIComponent("mimeType contains 'image/' and name contains '" + query + "' and trashed=false");
+    var r = await fetch('https://www.googleapis.com/drive/v3/files?q='+q+'&fields=files(id,name,thumbnailLink,mimeType)&pageSize=30', {
+      headers: { 'Authorization': 'Bearer ' + DRIVE_TOKEN }
+    });
+    var data = await r.json();
+    if(!data.files || !data.files.length){ grid.innerHTML='<div style="font-size:12px;color:var(--text2);grid-column:1/-1">No results for "'+query+'"</div>'; return; }
+    renderDriveFiles(data.files);
+  } catch(err){ grid.innerHTML='<div style="font-size:12px;color:var(--red-deep);grid-column:1/-1">Error: '+err.message+'</div>'; }
+}
+
+function renderDriveFiles(files){
+  var grid = document.getElementById('drive-file-grid');
+  grid.innerHTML = files.map(function(f){
+    var thumb = f.thumbnailLink || '';
+    return '<div class="drive-file" data-id="'+f.id+'" data-name="'+f.name+'" onclick="selectDriveFile(this)">'
+      + (thumb ? '<img src="'+thumb+'" alt="'+f.name+'">' : '<div style="aspect-ratio:1;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:20px">🖼</div>')
+      + '<div class="df-name">'+f.name+'</div>'
+      + '</div>';
+  }).join('');
+}
+
+async function selectDriveFile(el){
+  var fileId = el.dataset.id;
+  var name   = el.dataset.name;
+  document.querySelectorAll('.drive-file').forEach(function(x){ x.classList.remove('selected'); });
+  el.classList.add('selected');
+  el.style.opacity = '.6';
+  try {
+    /* Download file content from Drive */
+    var r = await fetch('https://www.googleapis.com/drive/v3/files/'+fileId+'?alt=media', {
+      headers: { 'Authorization': 'Bearer ' + DRIVE_TOKEN }
+    });
+    if(!r.ok) throw new Error('Drive download failed: ' + r.status);
+    var blob   = await r.blob();
+    var reader = new FileReader();
+    reader.onload = function(ev){
+      productB64  = ev.target.result.split(',')[1];
+      productName = name.replace(/\.[^.]+$/,'');
+      showProductPreview(ev.target.result, name);
+      saveToLibrary(ev.target.result, name);
+    };
+    reader.readAsDataURL(blob);
+  } catch(err){
+    alert('Could not load file from Drive: ' + err.message);
+  }
+  el.style.opacity = '1';
+}
+
+/* ── Generate ── */
+async function generateScenes(){
+  if(!BACKEND || !productB64) return;
+  var theme   = document.getElementById('custom-theme').value.trim() || selTheme;
+  var objects = document.getElementById('custom-obj').value.trim() || Array.from(selObjs).join(', ');
+  var count   = parseInt(document.getElementById('var-count').value);
+  var autoSave= document.getElementById('auto-save-drive').checked && !!DRIVE_TOKEN;
+  var btn     = document.getElementById('gen-btn');
+  btn.disabled = true;
+  document.getElementById('results-area').style.display  = 'none';
+  document.getElementById('loading-area').style.display  = 'block';
+  var bar = document.getElementById('gen-bar');
+  var sub = document.getElementById('loading-sub');
+  genImages = [];
+
+  for(var i = 0; i < count; i++){
+    bar.style.width  = Math.round((i/count)*100) + '%';
+    sub.textContent  = 'Generating scene ' + (i+1) + ' of ' + count + '...';
+    try {
+      var resp = await fetch(BACKEND + '/edit-image', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ image: productB64, theme, objects, mood: selMood, style: STYLES[i%STYLES.length], index: i })
+      });
+      if(!resp.ok) throw new Error('Server error ' + resp.status);
+      var data   = await resp.json();
+      var imgUrl = data.url || ('data:image/jpeg;base64,' + data.b64);
+      genImages.push({ url: imgUrl, b64: data.b64, desc: STYLES[i%STYLES.length] + ' · ' + theme.split(',')[0], index: i+1 });
+      /* Auto-save to Drive */
+      if(autoSave && data.b64){
+        try {
+          var fname = productName + '-scene-' + (i+1) + '-' + STYLES[i%STYLES.length].split(' ')[0] + '.png';
+          await uploadToDrive(data.b64, fname, 'Probiotic Beverages — AI Scenes');
+        } catch(e){ console.warn('Drive auto-save failed:', e.message); }
+      }
+    } catch(err){
+      console.error('Image '+(i+1)+' failed:', err);
+      genImages.push({ url:null, b64:null, desc:'Failed', index:i+1, error:true });
+    }
+    bar.style.width = Math.round(((i+1)/count)*100) + '%';
+  }
+
+  bar.style.width = '100%'; sub.textContent = 'Done!';
+  setTimeout(function(){
+    document.getElementById('loading-area').style.display = 'none';
+    renderResults(); btn.disabled = false;
+  }, 400);
+}
+
+function renderResults(){
+  var good = genImages.filter(function(r){ return !r.error && r.url; });
+  document.getElementById('results-title').textContent = good.length + ' of ' + genImages.length + ' scenes generated';
+  document.getElementById('results-grid').innerHTML = genImages.map(function(r, idx){
+    if(r.error || !r.url) return '<div class="result-card"><div class="result-img-wrap" style="display:flex;align-items:center;justify-content:center;background:var(--red-light)"><span style="font-size:12px;color:var(--red-deep);padding:1rem">Failed</span></div><div class="result-body"><div class="result-desc">Scene '+r.index+' failed</div></div></div>';
+    return '<div class="result-card" id="rc-'+idx+'"><div class="result-img-wrap"><img src="'+r.url+'" loading="lazy"><span class="result-badge">#'+r.index+'</span></div><div class="result-body"><div class="result-desc">'+r.desc+'</div><div class="result-btns"><button class="btn-dl" onclick="dlOne('+idx+')">⬇ PNG</button>'+(DRIVE_TOKEN?'<button class="btn-dl-drive-sm" onclick="dlOneDrive('+idx+')" title="Save to Drive">Drive</button>':'')+'<button class="btn-eye" onclick="preview(\''+r.url+'\')">⤢</button></div></div></div>';
+  }).join('');
+  document.getElementById('results-area').style.display = 'block';
+  document.getElementById('results-area').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ── Download ── */
+async function dlOne(idx){
+  var img = genImages[idx]; if(!img||img.error) return;
+  var b64 = img.b64 || (img.url && img.url.startsWith('data:') ? img.url.split(',')[1] : null);
+  if(!b64 && BACKEND){
+    var r = await fetch(BACKEND+'/proxy-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:img.url,b64:img.b64})});
+    if(r.ok) b64 = (await r.json()).image;
+  }
+  if(!b64) return;
+  var a=document.createElement('a'); a.href='data:image/png;base64,'+b64; a.download=productName+'-scene-'+img.index+'.png';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+async function dlOneDrive(idx){
+  var img = genImages[idx]; if(!img||img.error||!DRIVE_TOKEN) return;
+  var b64 = img.b64 || (img.url?.startsWith('data:') ? img.url.split(',')[1] : null);
+  if(!b64) return;
+  try {
+    await uploadToDrive(b64, productName+'-scene-'+img.index+'.png', 'Probiotic Beverages — AI Scenes');
+    var btn = document.querySelector('#rc-'+idx+' .btn-dl-drive-sm');
+    if(btn){ btn.textContent='✓'; setTimeout(function(){ btn.textContent='Drive'; },2000); }
+  } catch(err){ alert('Drive save failed: '+err.message); }
+}
+
+async function saveAllToDrive(){
+  if(!DRIVE_TOKEN) return;
+  var btn = document.querySelector('.btn-drive-save-all');
+  btn.textContent = '⏳ Saving...'; btn.disabled = true;
+  var good = genImages.filter(function(r){ return !r.error && (r.b64 || r.url?.startsWith('data:')); });
+  for(var i=0; i<good.length; i++){
+    var img = good[i];
+    var b64 = img.b64 || img.url.split(',')[1];
+    try { await uploadToDrive(b64, productName+'-scene-'+img.index+'.png', 'Probiotic Beverages — AI Scenes'); }
+    catch(e){ console.warn('Drive save failed for image '+img.index, e); }
+  }
+  btn.textContent = '✓ Saved to Drive'; btn.disabled = false;
+  setTimeout(function(){ btn.textContent='Save all to Drive'; },3000);
+}
+
+async function downloadAllZip(){
+  var btn = document.querySelector('.btn-zip');
+  btn.textContent = '⏳ ZIP...'; btn.disabled = true;
+  var valid = genImages.filter(function(r){ return !r.error && r.url; });
+  try {
+    var r = await fetch(BACKEND+'/download-all',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({images:valid.map(function(r){return{url:r.url,b64:r.b64,index:r.index};})})});
+    if(!r.ok) throw new Error('ZIP failed');
+    var d = await r.json();
+    var a=document.createElement('a');a.href='data:application/zip;base64,'+d.zip;a.download=productName+'-ai-scenes.zip';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+  } catch(e){ for(var i=0;i<valid.length;i++){ await dlOne(genImages.indexOf(valid[i])); await sleep(300); } }
+  btn.textContent='⬇ Download ZIP'; btn.disabled=false;
+}
+
+/* ── Google Drive upload ── */
+async function uploadToDrive(b64, filename, folderName){
+  folderName = folderName || 'Probiotic Beverages — AI Scenes';
+  var folderId  = await getOrCreateFolder(folderName);
+  var boundary  = 'boundary' + Date.now();
+  var metadata  = JSON.stringify({ name: filename, parents: [folderId] });
+  var body = '--' + boundary + '\r\nContent-Type: application/json\r\n\r\n' + metadata + '\r\n--' + boundary + '\r\nContent-Type: image/png\r\nContent-Transfer-Encoding: base64\r\n\r\n' + b64 + '\r\n--' + boundary + '--';
+  var r = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer '+DRIVE_TOKEN, 'Content-Type': 'multipart/related; boundary="'+boundary+'"' },
+    body
+  });
+  if(!r.ok){ var e=await r.text(); throw new Error(r.status+': '+e.slice(0,100)); }
+  return await r.json();
+}
+
+async function getOrCreateFolder(name){
+  var q = encodeURIComponent("name='"+name+"' and mimeType='application/vnd.google-apps.folder' and trashed=false");
+  var r = await fetch('https://www.googleapis.com/drive/v3/files?q='+q+'&fields=files(id)', {
+    headers: { 'Authorization': 'Bearer '+DRIVE_TOKEN }
+  });
+  var d = await r.json();
+  if(d.files && d.files.length) return d.files[0].id;
+  var cr = await fetch('https://www.googleapis.com/drive/v3/files',{
+    method:'POST', headers:{'Authorization':'Bearer '+DRIVE_TOKEN,'Content-Type':'application/json'},
+    body: JSON.stringify({name, mimeType:'application/vnd.google-apps.folder'})
+  });
+  return (await cr.json()).id;
+}
+
+/* ── Preview ── */
+function preview(url){
+  var o=document.createElement('div');o.className='fs-overlay';o.innerHTML='<img src="'+url+'">';
+  o.addEventListener('click',function(){document.body.removeChild(o);});document.body.appendChild(o);
+}
+
+/* ── Setup ── */
+function showSetup(){ document.getElementById('setup-modal').style.display='flex'; }
+function hideSetup(){ document.getElementById('setup-modal').style.display='none'; }
+function saveBackend(){
+  BACKEND=document.getElementById('backend-input').value.trim().replace(/\/$/,'');
+  localStorage.setItem('ai_backend',BACKEND);
+  document.getElementById('backend-saved').style.display='block';
+  setTimeout(function(){document.getElementById('backend-saved').style.display='none';},2000);
+  checkSetup(); hideSetup();
+  if(productB64) document.getElementById('gen-btn').disabled=false;
+}
+
+function sleep(ms){ return new Promise(function(r){ setTimeout(r,ms); }); }
+</script>
+</body>
+</html>
