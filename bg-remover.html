@@ -85,7 +85,28 @@
     .batch-card img{width:100%;aspect-ratio:1;object-fit:contain;display:block;background:repeating-conic-gradient(#ccc 0% 25%,#fff 0% 50%) 0 0/16px 16px}
     .batch-badge{position:absolute;top:4px;left:4px;background:rgba(0,0,0,.6);color:#fff;font-size:10px;padding:2px 6px;border-radius:20px}
     .batch-status{padding:6px 8px;font-size:11px;color:var(--text2);text-align:center;border-top:.5px solid var(--border)}
-    @media(max-width:480px){.preview-grid{grid-template-columns:1fr}.action-row{flex-direction:column}}
+    /* Batch results grid — shown after processing */
+    .results-batch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin:10px 0}
+    .result-batch-card{border-radius:var(--radius-lg);overflow:hidden;border:2px solid transparent;background:var(--bg);cursor:pointer;transition:.15s;position:relative;user-select:none}
+    .result-batch-card:hover{border-color:var(--green-mid)}
+    .result-batch-card.selected{border-color:var(--green);background:var(--green-light)}
+    .result-batch-card.failed{border-color:var(--red-mid);background:var(--red-light);cursor:default}
+    .result-batch-card img{width:100%;aspect-ratio:1;object-fit:contain;display:block;background:repeating-conic-gradient(#ccc 0% 25%,#fff 0% 50%) 0 0/12px 12px}
+    .result-batch-footer{padding:6px 8px;display:flex;align-items:center;gap:6px;border-top:.5px solid var(--border)}
+    .result-batch-name{font-size:11px;color:var(--text2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .result-batch-check{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--border2);background:var(--bg);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;transition:.12s}
+    .result-batch-card.selected .result-batch-check{background:var(--green);border-color:var(--green);color:#fff}
+    .result-batch-fail-msg{font-size:10px;color:var(--red-deep);padding:6px 8px;text-align:center}
+    .select-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:10px 0;border-top:.5px solid var(--border);border-bottom:.5px solid var(--border);margin:10px 0}
+    .sel-count{font-size:13px;color:var(--text2);flex:1}
+    .btn-sel-all{background:none;border:.5px solid var(--border2);border-radius:var(--radius);padding:6px 12px;font-size:12px;color:var(--text2);cursor:pointer;font-family:var(--font)}
+    .btn-sel-all:hover{border-color:var(--green-mid);color:var(--green-dark)}
+    .btn-dl-selected{background:var(--green);color:#fff;border:none;border-radius:var(--radius);padding:7px 14px;font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font)}
+    .btn-dl-selected:disabled{background:var(--bg3);color:var(--text3);cursor:not-allowed}
+    .btn-drive-selected{background:#4285f4;color:#fff;border:none;border-radius:var(--radius);padding:7px 14px;font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:5px}
+    .btn-drive-selected:disabled{background:var(--bg3);color:var(--text3);cursor:not-allowed}
+    .drive-save-progress{font-size:12px;color:var(--green-deep);margin-top:6px;min-height:18px}
+    @media(max-width:480px){.preview-grid{grid-template-columns:1fr}.action-row{flex-direction:column}.results-batch-grid{grid-template-columns:1fr 1fr}}
   </style>
 </head>
 <body>
@@ -162,10 +183,34 @@
     </div>
   </div>
 
-  <!-- Queue -->
+  <!-- Queue — shown while processing -->
   <div class="section" id="queue-section" style="display:none">
     <label class="lbl">Processing queue</label>
     <div class="batch-grid" id="batch-grid"></div>
+  </div>
+
+  <!-- Batch results — shown after processing with selection UI -->
+  <div id="batch-results-section" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+      <label class="lbl" style="margin-bottom:0">Results — select files to save</label>
+      <button class="btn-ghost" style="font-size:12px;padding:5px 12px" onclick="resetTool()">Process new batch</button>
+    </div>
+
+    <!-- Selection actions bar -->
+    <div class="select-actions">
+      <span class="sel-count" id="sel-count">0 selected</span>
+      <button class="btn-sel-all" onclick="selectAll()">Select all</button>
+      <button class="btn-sel-all" onclick="selectNone()">Deselect all</button>
+      <button class="btn-dl-selected" id="btn-dl-sel" onclick="downloadSelected()" disabled>⬇ Download selected</button>
+      <button class="btn-drive-selected" id="btn-drive-sel" onclick="saveBatchToDrive()" disabled style="display:none">
+        <svg width="12" height="12" viewBox="0 0 87.3 78"><path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="white"/><path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z" fill="white"/><path d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="white"/><path d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 27h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="white"/></svg>
+        Save selected to Drive
+      </button>
+    </div>
+    <div class="drive-save-progress" id="batch-drive-progress"></div>
+
+    <!-- Results grid -->
+    <div class="results-batch-grid" id="results-batch-grid"></div>
   </div>
 
   <!-- Single preview -->
@@ -247,6 +292,7 @@ var resultB64  = null;
 var resultName = 'bg-removed';
 var selQuality = 'auto';
 var processingQueue = [];
+var batchResults = []; /* stores { name, b64, selected } for each processed file */
 
 /* ── Init ── */
 document.addEventListener('DOMContentLoaded', function(){
@@ -278,6 +324,8 @@ function setupUpload(){
 function handleFiles(newFiles){
   files = newFiles;
   if(!files.length) return;
+  batchResults = [];
+  document.getElementById('batch-results-section').style.display = 'none';
   document.getElementById('process-btn').disabled = !BACKEND;
   document.getElementById('process-btn').textContent = files.length > 1 ? 'Remove Backgrounds (' + files.length + ' images)' : 'Remove Background';
 
@@ -391,25 +439,24 @@ async function processSingle(file){
 
 async function processBatch(){
   var total = files.length;
+  batchResults = [];
+
   for(var i = 0; i < total; i++){
     var statusEl = document.getElementById('batch-status-' + i);
     var card     = document.getElementById('batch-' + i);
     if(statusEl) statusEl.textContent = 'Processing...';
     if(card) card.style.borderColor = 'var(--green-mid)';
 
-    /* Normalise MIME type — Remove.bg accepts image/jpeg, image/png, image/webp */
     var rawType = files[i].type || '';
-    var mtype   = rawType === 'image/jpg' ? 'image/jpeg'  /* fix incorrect type */
-                : rawType === 'image/jpeg' ? 'image/jpeg'
+    var mtype   = rawType === 'image/jpg' || rawType === 'image/jpeg' ? 'image/jpeg'
                 : rawType === 'image/png'  ? 'image/png'
                 : rawType === 'image/webp' ? 'image/webp'
-                : 'image/jpeg'; /* safe default for unknown */
+                : 'image/jpeg';
 
-    var success = false;
+    var success  = false;
     var attempts = 0;
-    var maxAttempts = 3;
 
-    while(!success && attempts < maxAttempts){
+    while(!success && attempts < 3){
       attempts++;
       try {
         var b64  = await fileToB64(files[i]);
@@ -420,54 +467,148 @@ async function processBatch(){
 
         if(!resp.ok){
           var errData = await resp.json().catch(function(){ return {}; });
-          var errMsg  = (errData.reason || errData.error || 'Server error ' + resp.status);
-          /* 401 on retry — key issue, no point retrying */
-          if(resp.status === 401) throw new Error('API key error: ' + errMsg.slice(0,80));
-          /* 429 rate limit — wait and retry */
-          if(resp.status === 429){
-            if(statusEl) statusEl.textContent = 'Rate limited, waiting...';
-            await sleep(3000 * attempts);
-            continue;
-          }
-          throw new Error(errMsg.slice(0,60));
+          var errMsg  = errData.reason || errData.error || 'Error ' + resp.status;
+          if(resp.status === 401) throw new Error('API key error');
+          if(resp.status === 429){ if(statusEl) statusEl.textContent = 'Rate limited...'; await sleep(3000 * attempts); continue; }
+          throw new Error(errMsg.slice(0, 50));
         }
 
         var data = await resp.json();
         if(data.removed){
           success = true;
-          var img = card.querySelector('img');
+          /* Update preview in queue */
+          var img = card && card.querySelector('img');
           if(img) img.src = 'data:image/png;base64,' + data.image;
           if(statusEl) statusEl.textContent = '✓ Done';
           if(card) card.style.borderColor = 'var(--green)';
-
-          /* Auto-save to Drive if connected */
-          if(DRIVE_TOKEN){
-            var fname = files[i].name.replace(/\.[^.]+$/, '') + '-bg-removed.png';
-            await uploadToDrive(data.image, fname);
-          }
-
-          /* Download */
-          var a = document.createElement('a');
-          a.href     = 'data:image/png;base64,' + data.image;
-          a.download = files[i].name.replace(/\.[^.]+$/, '') + '-bg-removed.png';
-          document.body.appendChild(a); a.click(); document.body.removeChild(a);
+          /* Store result */
+          batchResults.push({ name: files[i].name, b64: data.image, selected: true, failed: false });
         } else {
           throw new Error(data.reason || 'Removal failed');
         }
       } catch(err){
-        if(attempts >= maxAttempts){
-          if(statusEl) statusEl.textContent = '✗ ' + err.message.slice(0, 40);
+        if(attempts >= 3){
+          if(statusEl) statusEl.textContent = '✗ ' + err.message.slice(0, 30);
           if(card) card.style.borderColor = 'var(--red-mid)';
+          batchResults.push({ name: files[i].name, b64: null, selected: false, failed: true, error: err.message });
         } else {
-          if(statusEl) statusEl.textContent = 'Retrying (' + attempts + ')...';
+          if(statusEl) statusEl.textContent = 'Retrying...';
           await sleep(1500);
         }
       }
     }
 
-    /* Small delay between images to avoid rate limiting */
     if(i < total - 1) await sleep(500);
   }
+
+  /* Hide queue, show results selection panel */
+  document.getElementById('queue-section').style.display = 'none';
+  renderBatchResults();
+}
+
+/* ── Render batch results with selection UI ── */
+function renderBatchResults(){
+  var grid = document.getElementById('results-batch-grid');
+  grid.innerHTML = batchResults.map(function(r, idx){
+    if(r.failed){
+      return '<div class="result-batch-card failed">'
+        + '<div style="aspect-ratio:1;background:var(--red-light);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--red-deep);padding:8px;text-align:center">'
+        + r.name.slice(0,20) + '<br><small>' + (r.error||'Failed').slice(0,30) + '</small></div>'
+        + '<div class="result-batch-fail-msg">✗ Failed</div></div>';
+    }
+    return '<div class="result-batch-card' + (r.selected ? ' selected' : '') + '" id="rbc-'+idx+'" onclick="toggleSelect('+idx+')">'
+      + '<img src="data:image/png;base64,' + r.b64 + '" alt="' + r.name + '">'
+      + '<div class="result-batch-footer">'
+      + '<span class="result-batch-name">' + r.name.replace(/\.[^.]+$/, '') + '</span>'
+      + '<div class="result-batch-check">' + (r.selected ? '✓' : '') + '</div>'
+      + '</div></div>';
+  }).join('');
+
+  document.getElementById('batch-results-section').style.display = 'block';
+  /* Show Drive save button only if connected */
+  document.getElementById('btn-drive-sel').style.display = DRIVE_TOKEN ? 'flex' : 'none';
+  updateSelectionCount();
+  document.getElementById('batch-results-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function toggleSelect(idx){
+  if(batchResults[idx].failed) return;
+  batchResults[idx].selected = !batchResults[idx].selected;
+  var card  = document.getElementById('rbc-' + idx);
+  var check = card.querySelector('.result-batch-check');
+  card.classList.toggle('selected', batchResults[idx].selected);
+  check.textContent = batchResults[idx].selected ? '✓' : '';
+  updateSelectionCount();
+}
+
+function selectAll(){
+  batchResults.forEach(function(r, idx){
+    if(!r.failed){ r.selected = true; var c=document.getElementById('rbc-'+idx); if(c){ c.classList.add('selected'); var ch=c.querySelector('.result-batch-check'); if(ch) ch.textContent='✓'; } }
+  });
+  updateSelectionCount();
+}
+
+function selectNone(){
+  batchResults.forEach(function(r, idx){
+    r.selected = false;
+    var c=document.getElementById('rbc-'+idx); if(c){ c.classList.remove('selected'); var ch=c.querySelector('.result-batch-check'); if(ch) ch.textContent=''; }
+  });
+  updateSelectionCount();
+}
+
+function updateSelectionCount(){
+  var sel = batchResults.filter(function(r){ return r.selected && !r.failed; }).length;
+  document.getElementById('sel-count').textContent = sel + ' of ' + batchResults.filter(function(r){ return !r.failed; }).length + ' selected';
+  document.getElementById('btn-dl-sel').disabled    = sel === 0;
+  document.getElementById('btn-drive-sel').disabled = sel === 0 || !DRIVE_TOKEN;
+}
+
+function downloadSelected(){
+  var selected = batchResults.filter(function(r){ return r.selected && !r.failed && r.b64; });
+  if(!selected.length) return;
+  selected.forEach(function(r, i){
+    setTimeout(function(){
+      var a = document.createElement('a');
+      a.href     = 'data:image/png;base64,' + r.b64;
+      a.download = r.name.replace(/\.[^.]+$/, '') + '-bg-removed.png';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }, i * 400);
+  });
+}
+
+async function saveBatchToDrive(){
+  if(!DRIVE_TOKEN) return;
+  var selected = batchResults.filter(function(r){ return r.selected && !r.failed && r.b64; });
+  if(!selected.length) return;
+
+  var btn      = document.getElementById('btn-drive-sel');
+  var progress = document.getElementById('batch-drive-progress');
+  btn.disabled = true;
+  btn.textContent = '⏳ Saving...';
+  progress.textContent = '';
+
+  var saved = 0, failed = 0;
+  for(var i = 0; i < selected.length; i++){
+    var r = selected[i];
+    progress.textContent = 'Saving ' + (i+1) + ' of ' + selected.length + ': ' + r.name;
+    try {
+      var fname = r.name.replace(/\.[^.]+$/, '') + '-bg-removed.png';
+      await uploadToDrive(r.b64, fname);
+      saved++;
+    } catch(err){
+      console.error('Drive save failed for', r.name, err.message);
+      failed++;
+      if(err.message.includes('401')){ disconnectDrive(); break; }
+    }
+    await sleep(300);
+  }
+
+  progress.innerHTML = failed === 0
+    ? '<span style="color:var(--green)">✓ Saved ' + saved + ' file' + (saved > 1 ? 's' : '') + ' to Google Drive → ' + FOLDER_NAME + '</span>'
+    : '<span style="color:var(--amber-deep)">Saved ' + saved + ', failed ' + failed + '. Check Drive connection.</span>';
+
+  btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 87.3 78"><path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="white"/><path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z" fill="white"/><path d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="white"/><path d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 27h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="white"/></svg> Save selected to Drive';
+  btn.disabled = false;
 }
 
 /* ── Download ── */
@@ -597,9 +738,11 @@ async function getOrCreateFolder(name){
 
 /* ── Reset ── */
 function resetTool(){
-  files = []; resultB64 = null;
+  files = []; resultB64 = null; batchResults = [];
   document.getElementById('preview-section').style.display = 'none';
   document.getElementById('queue-section').style.display = 'none';
+  document.getElementById('batch-results-section').style.display = 'none';
+  document.getElementById('drop-zone').style.display = 'block';
   document.getElementById('process-btn').disabled = true;
   document.getElementById('process-btn').textContent = 'Remove Background';
   document.getElementById('processing-div').style.display = 'flex';
@@ -607,6 +750,7 @@ function resetTool(){
   document.getElementById('result-actions').style.display = 'none';
   document.getElementById('drive-save-status').textContent = '';
   document.getElementById('processing-prog').style.width = '0%';
+  document.getElementById('batch-drive-progress').textContent = '';
 }
 
 /* ── Setup ── */
