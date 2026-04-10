@@ -347,13 +347,18 @@ async function processSingle(file){
   progEl.style.width = '20%';
 
   try {
-    var b64 = await fileToB64(file);
+    var b64     = await fileToB64(file);
+    var rawType = file.type || '';
+    var mtype   = rawType === 'image/jpg' || rawType === 'image/jpeg' ? 'image/jpeg'
+                : rawType === 'image/png'  ? 'image/png'
+                : rawType === 'image/webp' ? 'image/webp'
+                : 'image/jpeg';
     statusEl.textContent = 'Removing background...';
     progEl.style.width = '50%';
 
     var resp = await fetch(BACKEND + '/remove-bg', {
       method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ image: b64.split(',')[1], mtype: file.type || 'image/png', quality: selQuality })
+      body: JSON.stringify({ image: b64.split(',')[1], mtype: mtype })
     });
 
     if(!resp.ok) throw new Error('Server error ' + resp.status);
@@ -391,41 +396,77 @@ async function processBatch(){
     var card     = document.getElementById('batch-' + i);
     if(statusEl) statusEl.textContent = 'Processing...';
     if(card) card.style.borderColor = 'var(--green-mid)';
-    try {
-      var b64  = await fileToB64(files[i]);
-      var resp = await fetch(BACKEND + '/remove-bg', {
-        method: 'POST', headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ image: b64.split(',')[1], mtype: files[i].type || 'image/png', quality: selQuality })
-      });
-      if(!resp.ok) throw new Error('Server error ' + resp.status);
-      var data = await resp.json();
 
-      if(data.removed){
-        /* Show result in batch card */
-        var img = card.querySelector('img');
-        if(img) img.src = 'data:image/png;base64,' + data.image;
-        if(statusEl) statusEl.textContent = '✓ Done';
-        if(card) card.style.borderColor = 'var(--green)';
+    /* Normalise MIME type — Remove.bg accepts image/jpeg, image/png, image/webp */
+    var rawType = files[i].type || '';
+    var mtype   = rawType === 'image/jpg' ? 'image/jpeg'  /* fix incorrect type */
+                : rawType === 'image/jpeg' ? 'image/jpeg'
+                : rawType === 'image/png'  ? 'image/png'
+                : rawType === 'image/webp' ? 'image/webp'
+                : 'image/jpeg'; /* safe default for unknown */
 
-        /* Auto-save each to Drive if connected */
-        if(DRIVE_TOKEN){
-          var fname = files[i].name.replace(/\.[^.]+$/, '') + '-bg-removed.png';
-          await uploadToDrive(data.image, fname);
+    var success = false;
+    var attempts = 0;
+    var maxAttempts = 3;
+
+    while(!success && attempts < maxAttempts){
+      attempts++;
+      try {
+        var b64  = await fileToB64(files[i]);
+        var resp = await fetch(BACKEND + '/remove-bg', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ image: b64.split(',')[1], mtype: mtype })
+        });
+
+        if(!resp.ok){
+          var errData = await resp.json().catch(function(){ return {}; });
+          var errMsg  = (errData.reason || errData.error || 'Server error ' + resp.status);
+          /* 401 on retry — key issue, no point retrying */
+          if(resp.status === 401) throw new Error('API key error: ' + errMsg.slice(0,80));
+          /* 429 rate limit — wait and retry */
+          if(resp.status === 429){
+            if(statusEl) statusEl.textContent = 'Rate limited, waiting...';
+            await sleep(3000 * attempts);
+            continue;
+          }
+          throw new Error(errMsg.slice(0,60));
         }
 
-        /* Also trigger download */
-        var a = document.createElement('a');
-        a.href = 'data:image/png;base64,' + data.image;
-        a.download = files[i].name.replace(/\.[^.]+$/, '') + '-bg-removed.png';
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        await sleep(300);
-      } else {
-        throw new Error(data.reason || 'Failed');
+        var data = await resp.json();
+        if(data.removed){
+          success = true;
+          var img = card.querySelector('img');
+          if(img) img.src = 'data:image/png;base64,' + data.image;
+          if(statusEl) statusEl.textContent = '✓ Done';
+          if(card) card.style.borderColor = 'var(--green)';
+
+          /* Auto-save to Drive if connected */
+          if(DRIVE_TOKEN){
+            var fname = files[i].name.replace(/\.[^.]+$/, '') + '-bg-removed.png';
+            await uploadToDrive(data.image, fname);
+          }
+
+          /* Download */
+          var a = document.createElement('a');
+          a.href     = 'data:image/png;base64,' + data.image;
+          a.download = files[i].name.replace(/\.[^.]+$/, '') + '-bg-removed.png';
+          document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        } else {
+          throw new Error(data.reason || 'Removal failed');
+        }
+      } catch(err){
+        if(attempts >= maxAttempts){
+          if(statusEl) statusEl.textContent = '✗ ' + err.message.slice(0, 40);
+          if(card) card.style.borderColor = 'var(--red-mid)';
+        } else {
+          if(statusEl) statusEl.textContent = 'Retrying (' + attempts + ')...';
+          await sleep(1500);
+        }
       }
-    } catch(err){
-      if(statusEl) statusEl.textContent = '✗ ' + err.message.slice(0, 30);
-      if(card) card.style.borderColor = 'var(--red-mid)';
     }
+
+    /* Small delay between images to avoid rate limiting */
+    if(i < total - 1) await sleep(500);
   }
 }
 
