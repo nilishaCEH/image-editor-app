@@ -465,43 +465,58 @@ async function processBatch(){
           body: JSON.stringify({ image: b64.split(',')[1], mtype: mtype })
         });
 
+        /* Parse response body once */
+        var responseText = await resp.text();
+        var data;
+        try { data = JSON.parse(responseText); } catch(e) { data = {}; }
+
+        console.log('[BG Remove] file:', files[i].name, '| status:', resp.status, '| removed:', data.removed, '| hasImage:', !!(data.image && data.image.length > 0));
+
         if(!resp.ok){
-          var errData = await resp.json().catch(function(){ return {}; });
-          var errMsg  = errData.reason || errData.error || 'Error ' + resp.status;
-          if(resp.status === 401) throw new Error('API key error');
-          if(resp.status === 429){ if(statusEl) statusEl.textContent = 'Rate limited...'; await sleep(3000 * attempts); continue; }
-          throw new Error(errMsg.slice(0, 50));
+          var errMsg = data.reason || data.error || ('Error ' + resp.status);
+          if(resp.status === 401){
+            success = true;
+            throw new Error('401: ' + errMsg.slice(0, 60));
+          }
+          if(resp.status === 429){
+            if(statusEl) statusEl.textContent = 'Rate limited, waiting...';
+            await sleep(3000 * attempts);
+            continue;
+          }
+          throw new Error(errMsg.slice(0, 60));
         }
 
-        var data = await resp.json();
-        if(data.removed){
+        /* Check either removed:true OR just presence of image data */
+        var hasImage = data.image && data.image.length > 100;
+        if(hasImage){
           success = true;
-          /* Update preview in queue */
           var img = card && card.querySelector('img');
           if(img) img.src = 'data:image/png;base64,' + data.image;
-          if(statusEl) statusEl.textContent = '✓ Done';
+          if(statusEl) statusEl.textContent = data.removed ? '✓ Done' : '✓ Done (original)';
           if(card) card.style.borderColor = 'var(--green)';
-          /* Store result */
           batchResults.push({ name: files[i].name, b64: data.image, selected: true, failed: false });
         } else {
-          throw new Error(data.reason || 'Removal failed');
+          var reason = data.reason || data.error || JSON.stringify(data).slice(0, 80);
+          throw new Error(reason);
         }
+
       } catch(err){
-        if(attempts >= 3){
-          if(statusEl) statusEl.textContent = '✗ ' + err.message.slice(0, 30);
+        if(attempts >= 3 || success){
+          success = true; /* stop retrying */
+          if(statusEl) statusEl.textContent = '✗ ' + err.message.slice(0, 35);
           if(card) card.style.borderColor = 'var(--red-mid)';
           batchResults.push({ name: files[i].name, b64: null, selected: false, failed: true, error: err.message });
         } else {
-          if(statusEl) statusEl.textContent = 'Retrying...';
+          if(statusEl) statusEl.textContent = 'Retrying (' + attempts + '/3)...';
           await sleep(1500);
         }
       }
     }
 
-    if(i < total - 1) await sleep(500);
+    if(i < total - 1) await sleep(400);
   }
 
-  /* Hide queue, show results selection panel */
+  /* Always show results panel regardless of success/failure */
   document.getElementById('queue-section').style.display = 'none';
   renderBatchResults();
 }
